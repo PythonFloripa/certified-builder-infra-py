@@ -70,7 +70,7 @@ resource "aws_iam_role_policy" "lambda_custom_policy" {
           "ecr:GetAuthorizationToken",
           "ecr:BatchCheckLayerAvailability",
           "ecr:GetDownloadUrlForLayer",
-          "ecr:BatchGetImage"
+          "ecr:BatchGetImage",
         ]
         Resource = [
           var.ecr_repository_arn,
@@ -180,14 +180,20 @@ resource "aws_iam_role_policy" "lambda_builder_custom_policy" {
   })
 }
 
+# Data source para detectar mudanças na imagem ECR
+data "aws_ecr_image" "api_lambda_image" {
+  repository_name = split("/", var.ecr_api_repository_url)[1] # Extrai o nome do repositório da URL
+  image_tag       = var.image_tag
+}
+
 # Função Lambda
 resource "aws_lambda_function" "api_function" {
   function_name = "${var.project_name}-api-${var.environment}"
   role         = aws_iam_role.lambda_execution_role.arn
   
-  # Configuração da imagem Docker
+  # Configuração da imagem Docker usando digest para forçar atualização
   package_type = "Image"
-  image_uri    = "${var.ecr_api_repository_url}:${var.image_tag}"
+  image_uri    = "${var.ecr_api_repository_url}@${data.aws_ecr_image.api_lambda_image.image_digest}"
   
   # Configurações de performance e timeout
   timeout     = var.lambda_timeout
@@ -205,9 +211,10 @@ resource "aws_lambda_function" "api_function" {
     }
   }
 
-  # Configuração para evitar recriação desnecessária
+  # Configuração para atualizar quando a imagem ECR mudar
   lifecycle {
-    ignore_changes = [image_uri]
+    create_before_destroy = true
+    # Remove ignore_changes para permitir detecção automática de mudanças
   }
 
   tags = {
@@ -229,11 +236,18 @@ resource "aws_cloudwatch_log_group" "lambda_logs" {
   }
 }
 
+# Data source para detectar mudanças na imagem ECR do builder
+data "aws_ecr_image" "builder_lambda_image" {
+  repository_name = split("/", var.ecr_builder_repository_url)[1] # Extrai o nome do repositório da URL
+  image_tag       = var.image_tag
+}
+
 resource "aws_lambda_function" "builder_funcition" {
   function_name = "${var.project_name}-builder-${var.environment}"
   role         = aws_iam_role.lambda_builder_execution_role.arn
   package_type = "Image"
-  image_uri    = "${var.ecr_builder_repository_url}:${var.image_tag}"
+  # Configuração da imagem Docker usando digest para forçar atualização
+  image_uri    = "${var.ecr_builder_repository_url}@${data.aws_ecr_image.builder_lambda_image.image_digest}"
   timeout     = var.lambda_timeout
   memory_size = var.lambda_memory_size
 
@@ -245,8 +259,10 @@ resource "aws_lambda_function" "builder_funcition" {
     }
   }
 
+  # Configuração para atualizar quando a imagem ECR mudar
   lifecycle {
-    ignore_changes = [image_uri]
+    create_before_destroy = true
+    # Remove ignore_changes para permitir detecção automática de mudanças
   }
 
   tags = {
