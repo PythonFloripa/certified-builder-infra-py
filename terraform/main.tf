@@ -70,9 +70,9 @@ module "sqs" {
 module "ecr" {
   source = "./ecr"
 
-  api_repository_name = "${var.project_name}-api-${var.environment}"
+  api_repository_name     = "${var.project_name}-api-${var.environment}"
   builder_repository_name = "${var.project_name}-builder-${var.environment}"
-  project_name    = var.project_name
+  project_name            = var.project_name
 }
 
 # Módulo S3 para armazenar arquivos
@@ -98,18 +98,18 @@ module "s3" {
 module "lambda" {
   source = "./lambda"
 
-  project_name        = var.project_name
-  environment         = var.environment
-  aws_region          = var.aws_region
-  ecr_api_repository_name = module.ecr.api_repository_name
-  ecr_api_repository_url  = module.ecr.api_repository_url
+  project_name                = var.project_name
+  environment                 = var.environment
+  aws_region                  = var.aws_region
+  ecr_api_repository_name     = module.ecr.api_repository_name
+  ecr_api_repository_url      = module.ecr.api_repository_url
   ecr_builder_repository_name = module.ecr.builder_repository_name
-  ecr_builder_repository_url = module.ecr.builder_repository_url
-  ecr_builder_repository_arn = module.ecr.builder_repository_arn
-  image_tag           = var.lambda_image_tag
-  lambda_timeout      = var.lambda_timeout
-  lambda_memory_size  = var.lambda_memory_size
-  log_retention_days  = var.log_retention_days
+  ecr_builder_repository_url  = module.ecr.builder_repository_url
+  ecr_builder_repository_arn  = module.ecr.builder_repository_arn
+  image_tag                   = var.lambda_image_tag
+  lambda_timeout              = var.lambda_timeout
+  lambda_memory_size          = var.lambda_memory_size
+  log_retention_days          = var.log_retention_days
 
   # Variáveis de ambiente da aplicação
   url_service_tech   = var.url_service_tech
@@ -134,7 +134,7 @@ module "lambda" {
 
 }
 
-# Módulo API Gateway REST para exposição da API
+# Módulo API Gateway REST para exposição da API (só cria se a Lambda existir)
 module "api_gateway" {
   source = "./api-gateway"
 
