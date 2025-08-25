@@ -292,7 +292,9 @@ resource "aws_lambda_event_source_mapping" "builder_sqs_trigger" {
   # Configurações do processamento em lote
   batch_size                         = 1    # Processa 1 mensagem por vez
   maximum_batching_window_in_seconds = 5    # Aguarda até 5 segundos para formar um lote
-  
+  scaling_config {
+    maximum_concurrency = 3
+  }
   # Configurações de retry e erro
   function_response_types = ["ReportBatchItemFailures"]
   
