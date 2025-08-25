@@ -22,12 +22,34 @@ locals {
             #   lambda_integration = true
             #   cors_enabled = true
             # }
-            # "status" = {
-            #   method = "GET"
-            #   authorization = "NONE"
-            #   lambda_integration = true
-            #   cors_enabled = true
-            # }
+            "fetch" = {
+              method = "GET"
+              query_string_parameters = {
+                /* Endpoint unificado para busca de certificados.
+                  Suporta busca por order_id, email, product_id ou combinações.
+                  
+                  Query Parameters (todos opcionais, mas pelo menos um deve ser fornecido):
+                  - order_id: Busca certificados por ID do pedido (string)
+                  - email: Busca certificados por email do participante (string válido)
+                  - product_id: Busca certificados por ID do produto (string)
+                  
+                  Combinações válidas:
+                  - order_id (sozinho)
+                  - email (sozinho) 
+                  - product_id (sozinho)
+                  - email + product_id (combinação específica)
+                  - order_id + product_id (para filtragem adicional)
+                */
+                "order_id" = false    # Query parameter opcional
+                "email" = false       # Query parameter opcional 
+                "product_id" = false  # Query parameter opcional
+              }
+              authorization = "NONE"
+              lambda_integration = true
+              cors_enabled = true
+              # Validação será realizada no Lambda, não no API Gateway
+              # pois precisamos verificar se pelo menos um parâmetro foi fornecido
+            }
           }
         }
         # Exemplo de como adicionar novos recursos facilmente:
@@ -131,9 +153,17 @@ resource "aws_api_gateway_method" "endpoint_methods" {
   http_method   = each.value.config.method
   authorization = each.value.config.authorization
 
-  request_parameters = {
-    "method.request.header.Content-Type" = true
-  }
+  # Configuração dos parâmetros de requisição incluindo query parameters
+  request_parameters = merge(
+    {
+      "method.request.header.Content-Type" = true
+    },
+    # Adiciona query parameters se definidos na configuração do endpoint
+    can(each.value.config.query_string_parameters) ? {
+      for param_name, required in each.value.config.query_string_parameters :
+      "method.request.querystring.${param_name}" => required
+    } : {}
+  )
 }
 
 # Criação dinâmica das integrações com Lambda
