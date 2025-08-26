@@ -12,6 +12,7 @@ locals {
             "create" = {
               method = "POST"
               authorization = "NONE"
+              api_key_required = true  # Exige API Key
               lambda_integration = true
               cors_enabled = true
             }
@@ -45,6 +46,7 @@ locals {
                 "product_id" = false  # Query parameter opcional
               }
               authorization = "NONE"
+              api_key_required = true  # Exige API Key
               lambda_integration = true
               cors_enabled = true
               # Validação será realizada no Lambda, não no API Gateway
@@ -152,6 +154,7 @@ resource "aws_api_gateway_method" "endpoint_methods" {
   resource_id   = aws_api_gateway_resource.endpoint_resources[each.key].id
   http_method   = each.value.config.method
   authorization = each.value.config.authorization
+  api_key_required = lookup(each.value.config, "api_key_required", false)
 
   # Configuração dos parâmetros de requisição incluindo query parameters
   request_parameters = merge(
@@ -317,4 +320,60 @@ resource "aws_api_gateway_method_settings" "api_throttling" {
   }
 }
 
-# Configuração removida - agora CORS é criado dinamicamente acima
+# ==============================
+# CONFIGURAÇÃO DE API KEY
+# ==============================
+
+# API Key para autenticação
+resource "aws_api_gateway_api_key" "main_api_key" {
+  name        = "${var.project_name}-api-key-${var.environment}"
+  description = "API Key para autenticação do ${var.project_name} em ${var.environment}"
+  enabled     = true
+  
+  # Valor da API Key configurável via variável
+  value = var.api_key_value
+
+  tags = {
+    Name        = "${var.project_name}-api-key-${var.environment}"
+    Environment = var.environment
+    Project     = var.project_name
+  }
+}
+
+# Usage Plan para controlar o uso da API Key
+resource "aws_api_gateway_usage_plan" "main_usage_plan" {
+  name         = "${var.project_name}-usage-plan-${var.environment}"
+  description  = "Usage plan para ${var.project_name} em ${var.environment}"
+
+  api_stages {
+    api_id = aws_api_gateway_rest_api.api.id
+    stage  = aws_api_gateway_stage.api_stage.stage_name
+  }
+
+  quota_settings {
+    limit  = 1000  # 1k requests por mês
+    period = "MONTH"
+  }
+
+  throttle_settings {
+    rate_limit  = var.throttle_rate_limit   # requests por segundo
+    burst_limit = var.throttle_burst_limit  # burst máximo
+  }
+
+  tags = {
+    Name        = "${var.project_name}-usage-plan-${var.environment}"
+    Environment = var.environment
+    Project     = var.project_name
+  }
+}
+
+# Vinculação da API Key ao Usage Plan
+resource "aws_api_gateway_usage_plan_key" "main_usage_plan_key" {
+  key_id        = aws_api_gateway_api_key.main_api_key.id
+  key_type      = "API_KEY"
+  usage_plan_id = aws_api_gateway_usage_plan.main_usage_plan.id
+}
+
+# ==============================
+# OUTPUTS PARA API KEY
+# ==============================

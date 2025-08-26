@@ -144,4 +144,5 @@ module "api_gateway" {
   lambda_invoke_arn    = module.lambda.invoke_arn
   throttle_rate_limit  = var.api_throttle_rate_limit
   throttle_burst_limit = var.api_throttle_burst_limit
+  api_key_value        = var.api_key_value
 }

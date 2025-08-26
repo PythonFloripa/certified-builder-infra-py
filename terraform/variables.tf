@@ -77,3 +77,14 @@ variable "api_throttle_burst_limit" {
   type        = number
   default     = 200
 }
+
+variable "api_key_value" {
+  description = "Valor da API Key para autenticação do API Gateway (deve ser fornecido via terraform.tfvars)"
+  type        = string
+  sensitive   = true
+  
+  validation {
+    condition = can(regex("^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$", var.api_key_value))
+    error_message = "A API Key deve estar no formato UUID válido (ex: 8a3f1e2c-9d7b-4f4a-8453-bf3c1d2a6f29)."
+  }
+}
