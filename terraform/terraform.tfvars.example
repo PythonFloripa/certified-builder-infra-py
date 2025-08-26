@@ -24,3 +24,6 @@ prefix_api_version = "/api/v1"
 api_throttle_rate_limit  = 100
 api_throttle_burst_limit = 200
 
+# API Key para autenticação (gere um UUID único para cada ambiente)
+api_key_value = "SUA CHAVE AQUI"
+

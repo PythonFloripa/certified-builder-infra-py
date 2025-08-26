@@ -15,4 +15,7 @@ variable "builder_repository_name" {
   type        = string
 }
 
-
+variable "notification_repository_name" {
+  description = "Nome do repositório ECR"
+  type        = string
+}

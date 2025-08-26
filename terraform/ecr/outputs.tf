@@ -29,3 +29,18 @@ output "builder_repository_arn" {
   description = "ARN do repositório ECR"
   value       = aws_ecr_repository.builder_repository.arn
 }
+
+output "notification_repository_url" {
+  description = "URL do repositório ECR"
+  value       = aws_ecr_repository.notification_repository.repository_url
+}
+
+output "notification_repository_name" {
+  description = "Nome do repositório ECR"
+  value       = aws_ecr_repository.notification_repository.name
+}
+
+output "notification_repository_arn" {
+  description = "ARN do repositório ECR"
+  value       = aws_ecr_repository.notification_repository.arn
+}
