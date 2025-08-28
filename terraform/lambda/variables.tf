@@ -40,6 +40,21 @@ variable "ecr_builder_repository_arn" {
   type        = string
 }
 
+variable "ecr_notification_repository_name" {
+  description = "Nome do repositório ECR"
+  type        = string
+}
+
+variable "ecr_notification_repository_url" {
+  description = "URL do repositório ECR"
+  type        = string
+}
+
+variable "ecr_notification_repository_arn" {
+  description = "ARN do repositório ECR"
+  type        = string
+}
+
 variable "image_tag" {
   description = "Tag da imagem Docker"
   type        = string

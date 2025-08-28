@@ -304,3 +304,173 @@ resource "aws_lambda_event_source_mapping" "builder_sqs_trigger" {
     Project     = var.project_name
   }
 }
+
+# IAM Role para a função Lambda de notificação
+resource "aws_iam_role" "lambda_notification_execution_role" {
+  name = "${var.project_name}-lambda-notification-role-${var.environment}"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "lambda.amazonaws.com"
+        }
+      }
+    ]
+  })
+
+  tags = {
+    Name        = "${var.project_name}-lambda-notification-role-${var.environment}"
+    Environment = var.environment
+    Project     = var.project_name
+  }
+}
+
+# Policy básica para execução do Lambda de notificação
+resource "aws_iam_role_policy_attachment" "lambda_notification_basic_execution" {
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+  role       = aws_iam_role.lambda_notification_execution_role.name
+}
+
+# Policy personalizada para a Lambda de notificação acessar DynamoDB, S3 e SQS
+resource "aws_iam_role_policy" "lambda_notification_custom_policy" {
+  name = "${var.project_name}-lambda-notification-policy-${var.environment}"
+  role = aws_iam_role.lambda_notification_execution_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+          "dynamodb:UpdateItem",
+          "dynamodb:DeleteItem",
+          "dynamodb:Query",
+          "dynamodb:Scan"
+        ]
+        Resource = var.dynamodb_table_arns
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "sqs:SendMessage",
+          "sqs:ReceiveMessage",
+          "sqs:DeleteMessage",
+          "sqs:GetQueueAttributes"
+        ]
+        Resource = [
+          var.builder_queue_arn,
+          var.notification_queue_arn
+        ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "ecr:GetAuthorizationToken",
+          "ecr:BatchCheckLayerAvailability",
+          "ecr:GetDownloadUrlForLayer",
+          "ecr:BatchGetImage"
+        ]
+        Resource = [
+          var.ecr_notification_repository_arn,
+          "${var.ecr_notification_repository_arn}:*"
+        ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:DeleteObject",
+          "s3:ListBucket"
+        ]
+        Resource = [
+          var.s3_bucket_arn,
+          "${var.s3_bucket_arn}/*"
+        ]
+      }
+    ]
+  })
+}
+
+# Data source para detectar mudanças na imagem ECR de notificação
+data "aws_ecr_image" "notification_lambda_image" {
+  repository_name = split("/", var.ecr_notification_repository_url)[1] # Extrai o nome do repositório da URL
+  image_tag       = var.image_tag
+}
+
+# Função Lambda para processamento de notificações
+resource "aws_lambda_function" "notification_function" {
+  function_name = "${var.project_name}-notification-${var.environment}"
+  role         = aws_iam_role.lambda_notification_execution_role.arn
+  package_type = "Image"
+  
+  # Configuração da imagem Docker usando digest para forçar atualização
+  image_uri    = "${var.ecr_notification_repository_url}@${data.aws_ecr_image.notification_lambda_image.image_digest}"
+  
+  # Configurações de performance e timeout
+  timeout     = var.lambda_timeout
+  memory_size = var.lambda_memory_size
+
+  # Variáveis de ambiente para a Lambda de notificação
+  environment {
+    variables = {
+      REGION           = var.aws_region
+      S3_BUCKET_NAME   = var.s3_bucket_name
+      ENVIRONMENT      = var.environment
+      PROJECT_NAME     = var.project_name
+      URL_SERVICE_TECH = var.url_service_tech
+    }
+  }
+
+  # Configuração para atualizar quando a imagem ECR mudar
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  tags = {
+    Name        = "${var.project_name}-notification-${var.environment}"
+    Environment = var.environment
+    Project     = var.project_name
+  }
+}
+
+# CloudWatch Log Group para a função Lambda de notificação
+resource "aws_cloudwatch_log_group" "notification_logs" {
+  name              = "/aws/lambda/${aws_lambda_function.notification_function.function_name}"
+  retention_in_days = var.log_retention_days
+
+  tags = {
+    Name        = "${var.project_name}-notification-logs-${var.environment}"
+    Environment = var.environment
+    Project     = var.project_name
+  }
+}
+
+# Event Source Mapping - Conecta a fila SQS de notificação com a função Lambda de notificação
+# Quando uma mensagem chegar na fila de notificação, a Lambda será executada automaticamente
+resource "aws_lambda_event_source_mapping" "notification_sqs_trigger" {
+  event_source_arn = var.notification_queue_arn
+  function_name    = aws_lambda_function.notification_function.arn
+  
+  # Configurações do processamento em lote
+  batch_size                         = 1    # Processa 1 mensagem por vez
+  maximum_batching_window_in_seconds = 5    # Aguarda até 5 segundos para formar um lote
+  scaling_config {
+    maximum_concurrency = 2  # Limite menor para notificações
+  }
+  
+  # Configurações de retry e erro
+  function_response_types = ["ReportBatchItemFailures"]
+  
+  tags = {
+    Name        = "${var.project_name}-notification-sqs-trigger-${var.environment}"
+    Environment = var.environment
+    Project     = var.project_name
+  }
+}

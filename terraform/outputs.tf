@@ -117,6 +117,17 @@ output "lambda_function_arn" {
   value       = module.lambda.function_arn
 }
 
+# Informações da Lambda de Notificação
+output "lambda_notification_function_name" {
+  description = "Nome da função Lambda de Notificação"
+  value       = module.lambda.notification_function_name
+}
+
+output "lambda_notification_function_arn" {
+  description = "ARN da função Lambda de Notificação"
+  value       = module.lambda.notification_function_arn
+}
+
 # Informações do API Gateway
 output "api_gateway_url" {
   description = "URL base do API Gateway"
@@ -145,6 +156,8 @@ output "infrastructure_summary" {
     lambda = {
       function_name = module.lambda.function_name
       function_arn  = module.lambda.function_arn
+      notification_function_name = module.lambda.notification_function_name
+      notification_function_arn  = module.lambda.notification_function_arn
     }
     ecr = {
       repository_url  = module.ecr.api_repository_url

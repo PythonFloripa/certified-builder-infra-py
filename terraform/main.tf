@@ -107,6 +107,9 @@ module "lambda" {
   ecr_builder_repository_name = module.ecr.builder_repository_name
   ecr_builder_repository_url  = module.ecr.builder_repository_url
   ecr_builder_repository_arn  = module.ecr.builder_repository_arn
+  ecr_notification_repository_name = module.ecr.notification_repository_name
+  ecr_notification_repository_url  = module.ecr.notification_repository_url
+  ecr_notification_repository_arn  = module.ecr.notification_repository_arn
   image_tag                   = var.lambda_image_tag
   lambda_timeout              = var.lambda_timeout
   lambda_memory_size          = var.lambda_memory_size
