@@ -394,6 +394,47 @@ resource "aws_api_gateway_usage_plan_key" "main_usage_plan_key" {
   usage_plan_id = aws_api_gateway_usage_plan.main_usage_plan.id
 }
 
+# Method settings específicos para endpoint de download com rate limit muito baixo
+resource "aws_api_gateway_method_settings" "download_throttling" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  stage_name  = aws_api_gateway_stage.api_stage.stage_name
+  method_path = "*/certificate/download/GET"
+
+  settings {
+    throttling_rate_limit  = 0.083  # ~5 requests por minuto
+    throttling_burst_limit = 2      # burst máximo muito baixo
+    metrics_enabled        = true
+  }
+}
+
+# Usage Plan específico para endpoint de download com rate limit muito baixo
+resource "aws_api_gateway_usage_plan" "download_usage_plan" {
+  name         = "${var.project_name}-download-usage-plan-${var.environment}"
+  description  = "Usage plan restritivo para endpoint de download de certificados"
+
+  api_stages {
+    api_id = aws_api_gateway_rest_api.api.id
+    stage  = aws_api_gateway_stage.api_stage.stage_name
+  }
+
+  quota_settings {
+    limit  = 50   # 50 requests por mês
+    period = "MONTH"
+  }
+
+  throttle_settings {
+    rate_limit  = 0.083  # ~5 requests por minuto (5/60 = 0.083)
+    burst_limit = 2      # burst máximo muito baixo
+  }
+
+  tags = {
+    Name        = "${var.project_name}-download-usage-plan-${var.environment}"
+    Environment = var.environment
+    Project     = var.project_name
+    Purpose     = "download-rate-limiting"
+  }
+}
+
 # ==============================
 # OUTPUTS PARA API KEY
 # ==============================
