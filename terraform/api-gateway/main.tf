@@ -52,6 +52,26 @@ locals {
               # Validação será realizada no Lambda, não no API Gateway
               # pois precisamos verificar se pelo menos um parâmetro foi fornecido
             }
+            "download" = {
+              method = "GET"
+              query_string_parameters = {
+                /* Endpoint para download de certificados via URL pré-assinada do S3.
+                  
+                  Query Parameters:
+                  - id: UUID do certificado (obrigatório)
+                  
+                  Retorna:
+                  - HTML com redirecionamento automático para URL pré-assinada (30min)
+                  - HTML informativo se certificado não foi gerado
+                  - 404 se certificado não encontrado ou UUID inválido
+                */
+                "id" = true    # UUID do certificado (obrigatório)
+              }
+              authorization = "NONE"
+              api_key_required = false  # Não exige API Key para downloads
+              lambda_integration = true
+              cors_enabled = true
+            }
           }
         }
         # Exemplo de como adicionar novos recursos facilmente:

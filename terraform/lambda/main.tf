@@ -81,6 +81,7 @@ resource "aws_iam_role_policy" "lambda_custom_policy" {
         Effect = "Allow"
         Action = [
           "s3:GetObject",
+          "s3:GetObjectVersion",
           "s3:PutObject",
           "s3:DeleteObject",
           "s3:ListBucket",
@@ -153,6 +154,7 @@ resource "aws_iam_role_policy" "lambda_builder_custom_policy" {
         Effect = "Allow"
         Action = [
           "s3:GetObject",
+          "s3:GetObjectVersion",
           "s3:PutObject",
           "s3:DeleteObject",
           "s3:ListBucket",
@@ -204,6 +206,7 @@ resource "aws_lambda_function" "api_function" {
     variables = {
       REGION                 = var.aws_region
       BUILDER_QUEUE_URL      = var.builder_queue_url
+      S3_BUCKET_NAME         = var.s3_bucket_name
       ENVIRONMENT            = var.environment
       PROJECT_NAME           = var.project_name
       URL_SERVICE_TECH       = var.url_service_tech
