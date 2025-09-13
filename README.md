@@ -1,4 +1,3 @@
-
 # Certified Builder Infra PY
 
 ## Visão Geral do Projeto
@@ -130,3 +129,9 @@ A seguir estão os serviços da AWS criados por este projeto e suas respectivas 
     - `queue_name_builder_dlq`: Nome da fila de build DLQ.
     - `queue_name_notification`: Nome da fila de notificação.
     - `queue_name_notification_dlq`: Nome da fila de notificação DLQ.
+
+## Projetos Relacionados
+
+- **[certified-builder-py](https://github.com/PythonFloripa/certified_builder_py)**: Este projeto gera certificados personalizados para participantes de eventos, processando mensagens do SQS e utilizando templates predefinidos.
+- **[certified-builder-notification-py](https://github.com/PythonFloripa/certified-builder-notification-py)**: Este projeto é uma função AWS Lambda responsável por processar notificações de certificados gerados. Ele é acionado por mensagens em uma fila SQS, atualiza o status dos certificados e notifica um serviço externo sobre a conclusão.
+- **[certified-builder-api-py](https://github.com/PythonFloripa/certified-builder-api-py)**: Esta API é responsável por gerenciar a criação, consulta e download de certificados. Ela é construída como uma função Lambda da AWS, utilizando uma arquitetura serverless.
