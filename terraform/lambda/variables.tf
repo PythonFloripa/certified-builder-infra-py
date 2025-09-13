@@ -134,3 +134,8 @@ variable "s3_bucket_name" {
   description = "Nome do bucket S3"
   type        = string
 }
+
+variable "api_gateway_download_url" {
+  description = "URL base do endpoint de download do API Gateway"
+  type        = string
+}

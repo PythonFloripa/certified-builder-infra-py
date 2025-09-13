@@ -139,6 +139,11 @@ output "api_gateway_endpoint_create_certificate" {
   value       = module.api_gateway.api_endpoint_create_certificate
 }
 
+output "api_gateway_endpoint_download_certificate" {
+  description = "URL base do endpoint para download de certificados"
+  value       = module.api_gateway.api_endpoint_download_certificate
+}
+
 output "api_gateway_id" {
   description = "ID do API Gateway"
   value       = module.api_gateway.api_id

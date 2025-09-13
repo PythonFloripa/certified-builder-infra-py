@@ -423,11 +423,12 @@ resource "aws_lambda_function" "notification_function" {
   # Variáveis de ambiente para a Lambda de notificação
   environment {
     variables = {
-      REGION           = var.aws_region
-      S3_BUCKET_NAME   = var.s3_bucket_name
-      ENVIRONMENT      = var.environment
-      PROJECT_NAME     = var.project_name
-      URL_SERVICE_TECH = var.url_service_tech
+      REGION                    = var.aws_region
+      S3_BUCKET_NAME            = var.s3_bucket_name
+      ENVIRONMENT               = var.environment
+      PROJECT_NAME              = var.project_name
+      URL_SERVICE_TECH          = var.url_service_tech
+      API_GATEWAY_DOWNLOAD_URL  = var.api_gateway_download_url
     }
   }
 

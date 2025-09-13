@@ -47,5 +47,10 @@ output "api_endpoint_fetch_certificate" {
   value       = "https://${aws_api_gateway_rest_api.api.id}.execute-api.${data.aws_region.current.id}.amazonaws.com/${aws_api_gateway_stage.api_stage.stage_name}/api/v1/certificate/fetch"
 }
 
+output "api_endpoint_download_certificate" {
+  description = "URL base do endpoint para download de certificados"
+  value       = "https://${aws_api_gateway_rest_api.api.id}.execute-api.${data.aws_region.current.id}.amazonaws.com/${aws_api_gateway_stage.api_stage.stage_name}/api/v1/certificate/download"
+}
+
 # Data source para obter a região atual
 data "aws_region" "current" {}

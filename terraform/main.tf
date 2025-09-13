@@ -132,9 +132,10 @@ module "lambda" {
     module.participants_table.table_arn,
     module.products_table.table_arn
   ]
-  ecr_repository_arn = module.ecr.api_repository_arn
-  s3_bucket_arn      = module.s3.bucket_arn
-  s3_bucket_name     = module.s3.bucket_name
+  ecr_repository_arn       = module.ecr.api_repository_arn
+  s3_bucket_arn            = module.s3.bucket_arn
+  s3_bucket_name           = module.s3.bucket_name
+  api_gateway_download_url = module.api_gateway.api_endpoint_download_certificate
 
 }
 
