@@ -120,6 +120,7 @@ module "lambda" {
   prefix_api_version = var.prefix_api_version
   service_url_registration_api_solana = var.service_url_registration_api_solana
   service_api_key_registration_api_solana = var.service_api_key_registration_api_solana
+  tech_floripa_certificate_validate_url = var.tech_floripa_certificate_validate_url
 
   # Variáveis específicas da fila builder
   builder_queue_url      = module.sqs.builder_queue_url

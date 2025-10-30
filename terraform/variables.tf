@@ -100,3 +100,8 @@ variable "service_api_key_registration_api_solana" {
   type        = string
   sensitive   = true
 }
+
+variable "tech_floripa_certificate_validate_url" {
+  description = "URL para validação de certificados do Tech Floripa"
+  type        = string
+}

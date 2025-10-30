@@ -261,6 +261,7 @@ resource "aws_lambda_function" "builder_funcition" {
       BUCKET_NAME            = var.s3_bucket_name
       SERVICE_URL_REGISTRATION_API_SOLANA = var.service_url_registration_api_solana
       SERVICE_API_KEY_REGISTRATION_API_SOLANA = var.service_api_key_registration_api_solana
+      TECH_FLORIPA_CERTIFICATE_VALIDATE_URL = var.tech_floripa_certificate_validate_url
     }
   }
 
