@@ -139,3 +139,13 @@ variable "api_gateway_download_url" {
   description = "URL base do endpoint de download do API Gateway"
   type        = string
 }
+
+variable "service_url_registration_api_solana" {
+  description = "URL do serviço de registro da API Solana"
+  type        = string
+}
+
+variable "service_api_key_registration_api_solana" {
+  description = "API Key do serviço de registro da API Solana"
+  type        = string
+}

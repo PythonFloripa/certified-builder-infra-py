@@ -88,3 +88,15 @@ variable "api_key_value" {
     error_message = "A API Key deve estar no formato UUID válido (ex: 8a3f1e2c-9d7b-4f4a-8453-bf3c1d2a6f29)."
   }
 }
+
+# Variáveis para integração com API Solana
+variable "service_url_registration_api_solana" {
+  description = "URL do serviço de registro da API Solana"
+  type        = string
+}
+
+variable "service_api_key_registration_api_solana" {
+  description = "API Key do serviço de registro da API Solana"
+  type        = string
+  sensitive   = true
+}
