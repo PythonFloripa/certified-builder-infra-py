@@ -105,3 +105,8 @@ variable "tech_floripa_certificate_validate_url" {
   description = "URL para validação de certificados do Tech Floripa"
   type        = string
 }
+
+variable "tech_floripa_logo_url" {
+  description = "URL do logo do Tech Floripa"
+  type        = string
+}
