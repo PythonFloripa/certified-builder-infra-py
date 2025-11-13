@@ -8,7 +8,7 @@ aws_region = "us-east-1"
 environment = "dev"
 
 # Nome do projeto
-project_name = "tech-floripa-certified"
+project_name = "tech-floripa-certificates"
 
 # Configurações do Lambda
 lambda_image_tag    = "latest"
