@@ -27,3 +27,7 @@ api_throttle_burst_limit = 200
 # API Key para autenticação (gere um UUID único para cada ambiente)
 api_key_value = "SUA CHAVE AQUI"
 
+service_url_registration_api_solana = ""
+service_api_key_registration_api_solana = "AQUI VAI A API KEY"
+tech_floripa_certificate_validate_url = ""
+tech_floripa_logo_url = ""
