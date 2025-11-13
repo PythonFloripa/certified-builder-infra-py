@@ -7,15 +7,44 @@ variable "aws_region" {
   default     = "us-east-1"
 }
 
-# Ambiente de deploy (dev, staging, prod)
+variable "aws_profile" {
+  description = "AWS Profile para autenticação"
+  type        = string
+  default     = "default"
+}
+
+
+variable "aws_account_id" {
+  description = "ID da conta AWS onde os recursos serão criados"
+  type        = string
+}
+
+# Github
+
+variable "github_org" {
+  description = "Organização do GitHub"
+  type        = string
+}
+
+variable "github_repo" {
+  description = "Repositório do GitHub"
+  type        = string
+}
+
+variable "github_actions_role_arn" {
+  description = "ARN da role IAM para GitHub Actions"
+  type        = string
+}
+
+# Ambiente de deploy (dev ou live)
 variable "environment" {
   description = "Ambiente de deploy"
   type        = string
   default     = "dev"
 
   validation {
-    condition     = contains(["dev", "staging", "prod"], var.environment)
-    error_message = "O ambiente deve ser: dev, staging ou prod."
+    condition     = contains(["dev", "live"], var.environment)
+    error_message = "O ambiente deve ser: dev ou live."
   }
 }
 
@@ -82,9 +111,9 @@ variable "api_key_value" {
   description = "Valor da API Key para autenticação do API Gateway (deve ser fornecido via terraform.tfvars)"
   type        = string
   sensitive   = true
-  
+
   validation {
-    condition = can(regex("^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$", var.api_key_value))
+    condition     = can(regex("^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$", var.api_key_value))
     error_message = "A API Key deve estar no formato UUID válido (ex: 8a3f1e2c-9d7b-4f4a-8453-bf3c1d2a6f29)."
   }
 }
