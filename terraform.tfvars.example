@@ -1,0 +1,33 @@
+# Exemplo de arquivo de variáveis do Terraform
+# Copie este arquivo para terraform.tfvars e ajuste os valores conforme necessário
+
+# Configuração da AWS
+aws_region = "us-east-1"
+
+# Ambiente de deploy
+environment = "dev"
+
+# Nome do projeto
+project_name = "tech-floripa-certificates"
+
+# Configurações do Lambda
+lambda_image_tag    = "latest"
+lambda_timeout      = 30
+lambda_memory_size  = 512
+log_retention_days  = 14
+
+# Variáveis de ambiente da aplicação (usar valores reais em produção e desenvolvimento)
+url_service_tech   = "https://api.tech.floripa.br"
+prefix_api_version = "/api/v1"
+
+# Configurações do API Gateway
+api_throttle_rate_limit  = 100
+api_throttle_burst_limit = 200
+
+# API Key para autenticação (gere um UUID único para cada ambiente)
+api_key_value = "SUA CHAVE AQUI"
+
+service_url_registration_api_solana = ""
+service_api_key_registration_api_solana = "AQUI VAI A API KEY"
+tech_floripa_certificate_validate_url = ""
+tech_floripa_logo_url = ""
