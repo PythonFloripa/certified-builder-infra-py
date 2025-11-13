@@ -1,0 +1,25 @@
+name: Terraform Plan (PR)
+
+on:
+  pull_request:
+    branches: [ main ]
+      types: [ opened, synchronize, reopened ]
+
+permissions:
+  contents: read
+  pull-requests: write
+  id-token: write
+
+jobs:
+  plan:
+    name: Checkout and Terraform Plan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@main
+        with:
+          role-to-assume: ${{ secrets.GH_ACTIONS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Check AWS Credentials
+        run: aws sts get-caller-identity
