@@ -46,13 +46,7 @@ jobs:
       - name: Terraform Plan
         run: |
           set -euo pipefail
-          set +e
-          terraform plan -input=false -out=tfplan -detailed-exitcode
-          EXIT_CODE=$?
-          set -e
-
-          [ $EXIT_CODE -eq 1 ] && exit 1
-
+          terraform plan -input=false -out=tfplan
           terraform show -no-color tfplan > plan-output.txt
           echo "## Terraform Plan" > plan-comment.md
           echo '```hcl' >> plan-comment.md
