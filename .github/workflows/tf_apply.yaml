@@ -21,7 +21,65 @@ permissions:
   id-token: write
 
 jobs:
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Get PR Number
+        id: get_pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PR_NUMBER=$(gh pr list --state merged --json number,mergeCommit --jq ".[] | select(.mergeCommit.oid == \"${{ github.sha }}\") | .number")
+          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+
+      - name: Detect changed Terraform directories from PR
+        if: steps.get_pr.outputs.pr_number
+        id: set-matrix
+        run: |
+          PR_NUMBER=${{ steps.get_pr.outputs.pr_number }}
+
+          # Get changed files from the merged PR
+          CHANGED_FILES=$(gh pr view $PR_NUMBER --json files --jq '.files[].path')
+
+          DIRS=()
+
+          # Check which terraform directories changed
+          if echo "$CHANGED_FILES" | grep -q "^terraform/env/dev/"; then
+            DIRS+=('{"dir":"terraform/env/dev","env":"dev","pr":"'$PR_NUMBER'"}')
+          fi
+
+          if echo "$CHANGED_FILES" | grep -q "^terraform/" | grep -qv "^terraform/env/"; then
+            DIRS+=('{"dir":"terraform","env":"shared","pr":"'$PR_NUMBER'"}')
+          fi
+
+          # Build JSON matrix
+          if [ ${#DIRS[@]} -eq 0 ]; then
+            echo "matrix={\"include\":[]}" >> $GITHUB_OUTPUT
+            echo "No Terraform changes detected"
+          else
+            JSON="["
+            for i in "${!DIRS[@]}"; do
+              [ $i -gt 0 ] && JSON+=","
+              JSON+="${DIRS[$i]}"
+            done
+            JSON+="]"
+            echo "matrix={\"include\":$JSON}" >> $GITHUB_OUTPUT
+            echo "Detected changes in: ${DIRS[@]}"
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+
   apply:
+    needs: detect
+    if: needs.detect.outputs.matrix != '{"include":[]}'
+    strategy:
+      matrix: ${{ fromJson(needs.detect.outputs.matrix) }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -32,29 +90,19 @@ jobs:
         with:
           role-to-assume: ${{ env.TF_VAR_github_actions_role_arn }}
           aws-region: ${{ env.TF_VAR_aws_region }}
-          role-session-name: TerraformApplySession
+          role-session-name: TerraformApplySession-${{ matrix.env }}
 
       - name: Terraform Init
         run: terraform init -input=false -upgrade=false
-        working-directory: terraform
-
-      - name: Get PR Number
-        id: get_pr
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          PR_NUMBER=$(gh pr list --state merged --json number,mergeCommit --jq ".[] | select(.mergeCommit.oid == \"${{ github.sha }}\") | .number")
-          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+        working-directory: ${{ matrix.dir }}
 
       - name: Download and Verify Plan
-        if: steps.get_pr.outputs.pr_number
         id: verify
         run: |
           set -euo pipefail
-          PR_NUMBER=${{ steps.get_pr.outputs.pr_number }}
 
           # Download plan from S3
-          aws s3 cp s3://${{ env.TFPLAN_S3_BUCKET }}/$PR_NUMBER/tfplan tfplan
+          aws s3 cp s3://${{ env.TFPLAN_S3_BUCKET }}/${{ matrix.env }}/${{ matrix.pr }}/tfplan tfplan
 
           # Generate fresh plan for comparison
           terraform plan -input=false -out=tfplan-new
@@ -76,10 +124,10 @@ jobs:
           else
             echo "has_changes=true" >> $GITHUB_OUTPUT
           fi
-        working-directory: terraform
+        working-directory: ${{ matrix.dir }}
 
       - name: Terraform Apply
-        if: steps.get_pr.outputs.pr_number && steps.verify.outputs.has_changes == 'true'
+        if: steps.verify.outputs.has_changes == 'true'
         run: terraform apply -input=false tfplan
-        working-directory: terraform
+        working-directory: ${{ matrix.dir }}
 
