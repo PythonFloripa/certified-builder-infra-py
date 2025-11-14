@@ -4,30 +4,41 @@ resource "aws_iam_openid_connect_provider" "github" {
   client_id_list = ["sts.amazonaws.com"]
 }
 
+locals {
+  github_oidc_subject_prefix = "repo:${var.github_org}/${var.github_repo}:"
+  github_oidc_allowed_subjects = [
+    for ref in var.github_oidc_allowed_refs : "${local.github_oidc_subject_prefix}${ref}"
+  ]
+}
+
+data "aws_iam_policy_document" "github_actions_assume_role" {
+  statement {
+    sid    = "GithubActionsOidcAssumeRole"
+    effect = "Allow"
+
+    principals {
+      type        = "Federated"
+      identifiers = [aws_iam_openid_connect_provider.github.arn]
+    }
+
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "token.actions.githubusercontent.com:aud"
+      values   = ["sts.amazonaws.com"]
+    }
+
+    condition {
+      test     = "StringLike"
+      variable = "token.actions.githubusercontent.com:sub"
+      values   = local.github_oidc_allowed_subjects
+    }
+  }
+}
+
 # --- IAM Role for GitHub Actions OIDC ---
 resource "aws_iam_role" "github_actions" {
-  name = "github-actions-terraform-role"
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Principal = {
-          Federated = aws_iam_openid_connect_provider.github.arn
-        }
-        Action = "sts:AssumeRoleWithWebIdentity"
-        Condition = {
-          StringEquals = {
-            "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
-          }
-          StringLike = {
-            "token.actions.githubusercontent.com:sub" = [
-              "repo:${var.github_org}/${var.github_repo}:ref:refs/heads/main",
-              "repo:${var.github_org}/${var.github_repo}:ref:refs/heads/dev"
-            ]
-          }
-        }
-      }
-    ]
-  })
+  name               = "github-actions-terraform-role"
+  assume_role_policy = data.aws_iam_policy_document.github_actions_assume_role.json
 }
