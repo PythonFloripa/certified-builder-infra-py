@@ -55,11 +55,12 @@ jobs:
 
           # Download plan from S3
           if ! aws s3 cp s3://${{ env.TFPLAN_S3_BUCKET }}/$PR_NUMBER/tfplan tfplan; then
-            echo "ERROR: Failed to download plan from S3"
+            echo "ERROR: Failed to download plan from S3 (s3://${{ env.TFPLAN_S3_BUCKET }}/$PR_NUMBER/tfplan)"
+            echo "Plan may not have been uploaded or has expired"
             exit 1
           fi
 
-          # Generate fresh plan for comparison
+          # Generate fresh plan with exit code detection
           set +e
           terraform plan -input=false -out=tfplan-new -detailed-exitcode
           EXIT_CODE=$?
