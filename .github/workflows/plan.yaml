@@ -10,6 +10,16 @@ on:
       - 'main'
   workflow_dispatch:
 
+env:
+  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  GH_ACTIONS_ROLE_ARN: ${{ secrets.GH_ACTIONS_ROLE_ARN }}
+  SERVICE_URL_REGISTRATION_API_SOLANA: ${{ secrets.SERVICE_URL_REGISTRATION_API_SOLANA }}
+  SERVICE_API_KEY_REGISTRATION_API_SOLANA: ${{ secrets.SERVICE_API_KEY_REGISTRATION_API_SOLANA }}
+  TECH_FLORIPA_CERTIFICATE_VALIDATE_URL: ${{ secrets.TECH_FLORIPA_CERTIFICATE_VALIDATE_URL }}
+  API_KEY_VALUE: ${{ secrets.API_KEY_VALUE }}
+
+
 permissions:
   contents: read
   pull-requests: write
@@ -23,10 +33,46 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@main
         with:
-          role-to-assume: "arn:aws:iam::334318883918:role/github-actions-assume-role"
-          aws-region: "us-east-1"
+          role-to-assume: {{ secrets.GH_ACTIONS_ROLE_ARN }}
+          aws-region: {{ secrets.AWS_REGION }}
           role-session-name: TerraformPlanSession
-
 
       - name: Check AWS Credentials
         run: aws sts get-caller-identity
+
+      - name: Checkout Repository
+        uses: actions/checkout@v5
+
+      - name: Set up TF Vars
+        run: |
+          echo "aws_account_id = \"$AWS_ACCOUNT_ID\"" >> terraform/terraform.tfvars
+          echo "aws_region     = \"$AWS_REGION\"" >> terraform/terraform.tfvars
+          echo "github_actions_role_arn = \"$GH_ACTIONS_ROLE_ARN\"" >> terraform/terraform.tfvars
+          echo "service_url_registration_api_solana     = \"$SERVICE_URL_REGISTRATION_API_SOLANA\"" >> terraform/terraform.tfvars
+          echo "service_api_key_registration_api_solana = \"$SERVICE_API_KEY_REGISTRATION_API_SOLANA\"" >> terraform/terraform.tfvars
+          echo "tech_floripa_certificate_validate_url   = \"$TECH_FLORIPA_CERTIFICATE_VALIDATE_URL\"" >> terraform/terraform.tfvars
+          echo "api_key_value = \"$API_KEY_VALUE\"" >> terraform/terraform.tfvars
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        run: cd terraform && terraform init -input=false
+
+      - name: Terraform Plan
+        run: cd terraform && terraform plan -input=false -out=tfplan
+
+      - name: Upload plan to artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan
+          path: terraform/tfplan
+
+      - name: Comment PR with Terraform Plan
+        uses: marocchino/sticky-pull-request-comment@v2
+        recreate: true
+        message: |
+          ## :terraform: Terraform Plan
+          ```hcl
+          $(cd terraform && terraform show -no-color tfplan)
+          ```

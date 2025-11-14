@@ -20,3 +20,5 @@ terraform/*.tfvars
 .vscode
 
 *.tfstate
+
+tfplan
