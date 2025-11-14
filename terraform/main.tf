@@ -48,7 +48,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "tech_floripa_plan_artifacts_li
     filter {}
 
     expiration {
-      days = 7
+      days = 1
     }
   }
 }
@@ -59,6 +59,7 @@ resource "aws_s3_bucket_policy" "tech_floripa_certificates_dev_tf_state_policy" 
     Version = "2012-10-17"
     Statement = [
       {
+        Sid    = "AllowGitHubActionsRole"
         Effect = "Allow"
         Principal = {
           AWS = "arn:aws:iam::${var.aws_account_id}:role/github-actions-assume-role"
@@ -68,6 +69,21 @@ resource "aws_s3_bucket_policy" "tech_floripa_certificates_dev_tf_state_policy" 
           aws_s3_bucket.tech_floripa_certificates_dev_tf_state.arn,
           "${aws_s3_bucket.tech_floripa_certificates_dev_tf_state.arn}/*"
         ]
+      },
+      {
+        Sid    = "DenyAllOthers"
+        Effect = "Deny"
+        Principal = "*"
+        Action = "s3:*"
+        Resource = [
+          aws_s3_bucket.tech_floripa_certificates_dev_tf_state.arn,
+          "${aws_s3_bucket.tech_floripa_certificates_dev_tf_state.arn}/*"
+        ]
+        Condition = {
+          StringNotEquals = {
+            "aws:PrincipalArn" = "arn:aws:iam::${var.aws_account_id}:role/github-actions-assume-role"
+          }
+        }
       }
     ]
   })
@@ -79,6 +95,7 @@ resource "aws_s3_bucket_policy" "tech_floripa_plan_artifacts_policy" {
     Version = "2012-10-17"
     Statement = [
       {
+        Sid    = "AllowGitHubActionsRole"
         Effect = "Allow"
         Principal = {
           AWS = "arn:aws:iam::${var.aws_account_id}:role/github-actions-assume-role"
@@ -88,6 +105,21 @@ resource "aws_s3_bucket_policy" "tech_floripa_plan_artifacts_policy" {
           aws_s3_bucket.tech_floripa_plan_artifacts.arn,
           "${aws_s3_bucket.tech_floripa_plan_artifacts.arn}/*"
         ]
+      },
+      {
+        Sid    = "DenyAllOthers"
+        Effect = "Deny"
+        Principal = "*"
+        Action = "s3:*"
+        Resource = [
+          aws_s3_bucket.tech_floripa_plan_artifacts.arn,
+          "${aws_s3_bucket.tech_floripa_plan_artifacts.arn}/*"
+        ]
+        Condition = {
+          StringNotEquals = {
+            "aws:PrincipalArn" = "arn:aws:iam::${var.aws_account_id}:role/github-actions-assume-role"
+          }
+        }
       }
     ]
   })
