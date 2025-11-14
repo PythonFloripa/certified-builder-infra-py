@@ -38,6 +38,18 @@ resource "aws_iam_role" "github_actions_assume_role" {
 
 ### IAM Permissions for Github Action Role
 data "aws_iam_policy_document" "github_action_permissions" {
+  # IAM permissions for Terraform plan/apply to read OIDC providers and policies
+  statement {
+    effect = "Allow"
+    actions = [
+      "iam:GetOpenIDConnectProvider",
+      "iam:GetPolicy"
+    ]
+    resources = [
+      "arn:aws:iam::${var.aws_account_id}:oidc-provider/token.actions.githubusercontent.com",
+      "arn:aws:iam::${var.aws_account_id}:policy/github-actions-policy"
+    ]
+  }
   # S3
   statement {
     effect = "Allow"
