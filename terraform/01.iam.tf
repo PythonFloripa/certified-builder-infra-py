@@ -39,7 +39,6 @@ resource "aws_iam_role" "github_actions_assume_role" {
 ### IAM Permissions for Github Action Role
 data "aws_iam_policy_document" "github_action_permissions" {
   # IAM permissions for Terraform plan/apply to read OIDC providers and policies
-  # 1. List* actions must use resource = ["*"]
   statement {
     effect = "Allow"
     actions = [
