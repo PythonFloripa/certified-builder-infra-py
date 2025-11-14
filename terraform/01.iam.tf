@@ -52,7 +52,7 @@ data "aws_iam_policy_document" "github_action_permissions" {
     resources = ["*"]
   }
 
-  # 2. Get*/Read actions can be scoped to specific ARNs
+  # Get*/Read actions can be scoped to specific ARNs
   statement {
     effect = "Allow"
     actions = [
