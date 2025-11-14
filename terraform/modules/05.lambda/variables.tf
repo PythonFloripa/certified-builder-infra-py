@@ -148,6 +148,7 @@ variable "service_url_registration_api_solana" {
 variable "service_api_key_registration_api_solana" {
   description = "API Key do serviço de registro da API Solana"
   type        = string
+  sensitive   = true
 }
 
 variable "tech_floripa_certificate_validate_url" {
