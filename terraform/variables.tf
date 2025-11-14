@@ -31,28 +31,6 @@ variable "github_repo" {
   type        = string
 }
 
-variable "github_oidc_allowed_refs" {
-  description = "Lista de refs/padrões StringLike do GitHub permitidos para assumir a role (ex: ref:refs/heads/main, ref:refs/heads/feat/*)."
-  type        = list(string)
-  default = [
-    "ref:refs/heads/main",
-    "ref:refs/heads/feat/*"
-  ]
-
-  validation {
-    condition     = length(var.github_oidc_allowed_refs) > 0
-    error_message = "É necessário informar pelo menos um ref permitido para o OIDC."
-  }
-
-  validation {
-    condition = alltrue([
-      for ref in var.github_oidc_allowed_refs : can(regex("^ref:refs/[-A-Za-z0-9_./*]+$", ref))
-    ])
-
-    error_message = "Cada ref deve seguir o formato 'ref:refs/...', por exemplo: 'ref:refs/heads/main'."
-  }
-}
-
 variable "github_actions_role_arn" {
   description = "ARN da role IAM para GitHub Actions"
   type        = string
