@@ -68,20 +68,12 @@ jobs:
           fi
           echo "✅ Terraform initialized successfully"
 
-      - name: Get PR Number from Merge Commit
+      - name: Get PR Number
         id: get_pr
         run: |
-          set -euo pipefail
-          echo "Extracting PR number from merge commit..."
-          # Extract PR number from merge commit message (format: "Merge pull request #123 from...")
-          PR_NUMBER=$(git log -1 --pretty=%B | grep -oP 'Merge pull request #\K\d+' || echo "")
-          if [ -z "$PR_NUMBER" ]; then
-            echo "ℹ️  No PR number found in commit message. Skipping plan download."
-            echo "pr_number=" >> $GITHUB_OUTPUT
-          else
-            echo "✅ Found PR #$PR_NUMBER"
-            echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
-          fi
+          # Get PR number from commit SHA using GitHub API
+          PR_NUMBER=$(gh pr list --state merged --json number,mergeCommit --jq ".[] | select(.mergeCommit.oid == \"${{ github.sha }}\") | .number")
+          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
 
       - name: Download Plan from S3
         if: steps.get_pr.outputs.pr_number != ''
