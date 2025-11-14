@@ -17,6 +17,10 @@ terraform/*.tfstate
 terraform/*.tfstate.backup
 terraform/*.tfvars
 
+terraform/**/*.tfvars
+terraform/**/.terraform.lock.hcl
+terraform/**/.terraform/*
+
 .vscode
 
 *.tfstate
