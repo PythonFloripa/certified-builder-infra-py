@@ -60,25 +60,44 @@ jobs:
           echo "✅ Terraform initialized successfully"
 
       - name: Terraform Plan and Generate Markdown
+        id: plan
         run: |
           set -euo pipefail
           echo "Generating Terraform plan..."
           cd terraform
 
-          if ! terraform plan -input=false -out=tfplan; then
-            echo "❌ ERROR: terraform plan failed"
-            echo "Command: terraform plan -input=false -out=tfplan"
-            exit 1
+          if ! terraform plan -input=false -out=tfplan -detailed-exitcode; then
+            EXIT_CODE=$?
+            if [ $EXIT_CODE -eq 1 ]; then
+              echo "❌ ERROR: terraform plan failed"
+              echo "Command: terraform plan -input=false -out=tfplan"
+              exit 1
+            elif [ $EXIT_CODE -eq 2 ]; then
+              echo "✅ Plan generated successfully (changes detected)"
+              echo "has_changes=true" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "ℹ️  Plan generated successfully (no changes)"
+            echo "has_changes=false" >> $GITHUB_OUTPUT
           fi
-          echo "✅ Plan generated successfully"
 
           echo "Creating markdown comment..."
           # Create markdown file with header and code block
           echo "## :terraform: Terraform Plan Summary" > plan-comment.md
           echo "" >> plan-comment.md
-          echo '```hcl' >> plan-comment.md
-          terraform show -no-color tfplan | sed -n '/Terraform will perform the following actions:/,$p' >> plan-comment.md
-          echo '```' >> plan-comment.md
+
+          if [ "$(cat plan-comment.md)" ]; then
+            PLAN_OUTPUT=$(terraform show -no-color tfplan)
+            if echo "$PLAN_OUTPUT" | grep -q "No changes"; then
+              echo "**No infrastructure changes detected.**" >> plan-comment.md
+              echo "" >> plan-comment.md
+              echo "Your infrastructure matches the configuration." >> plan-comment.md
+            else
+              echo '```hcl' >> plan-comment.md
+              echo "$PLAN_OUTPUT" | sed -n '/Terraform will perform the following actions:/,$p' >> plan-comment.md
+              echo '```' >> plan-comment.md
+            fi
+          fi
           echo "✅ Markdown comment created"
 
       - name: Comment PR with Terraform Plan
