@@ -50,7 +50,8 @@ data "aws_iam_policy_document" "github_action_permissions" {
       "iam:ListPolicies",
       "iam:ListPolicyVersions",
       "iam:ListOpenIDConnectProviders",
-      "iam:ListRolePolicies"
+      "iam:ListRolePolicies",
+      "iam:ListAttachedRolePolicies"
     ]
     resources = [
       "arn:aws:iam::${var.aws_account_id}:oidc-provider/token.actions.githubusercontent.com",
