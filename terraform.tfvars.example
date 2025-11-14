@@ -2,7 +2,11 @@
 # Copie este arquivo para terraform.tfvars e ajuste os valores conforme necessário
 
 # Configuração da AWS
-aws_region = "us-east-1"
+aws_region  = "us-east-1"
+aws_profile = "default"
+
+# Use the 12-digit account number without any separators (per IAM docs)
+aws_account_id = "123456789012"
 
 # Ambiente de deploy
 environment = "dev"
@@ -11,10 +15,10 @@ environment = "dev"
 project_name = "tech-floripa-certificates"
 
 # Configurações do Lambda
-lambda_image_tag    = "latest"
-lambda_timeout      = 30
-lambda_memory_size  = 512
-log_retention_days  = 14
+lambda_image_tag   = "latest"
+lambda_timeout     = 30
+lambda_memory_size = 512
+log_retention_days = 14
 
 # Variáveis de ambiente da aplicação (usar valores reais em produção e desenvolvimento)
 url_service_tech   = "https://api.tech.floripa.br"
