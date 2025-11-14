@@ -85,6 +85,27 @@ data "aws_iam_policy_document" "github_action_permissions" {
       "arn:aws:s3:::tech-floripa-plan-artifacts/*"
     ]
   }
+
+  # ECR
+  statement {
+    effect = "Allow"
+    actions = [
+      "ecr:CreateRepository",
+      "ecr:DeleteRepository",
+      "ecr:DescribeRepositories",
+      "ecr:ListTagsForResource",
+      "ecr:TagResource",
+      "ecr:UntagResource",
+      "ecr:PutLifecyclePolicy",
+      "ecr:GetLifecyclePolicy",
+      "ecr:DeleteLifecyclePolicy",
+      "ecr:PutImageScanningConfiguration",
+      "ecr:PutImageTagMutability"
+    ]
+    resources = [
+      "arn:aws:ecr:${var.aws_region}:${var.aws_account_id}:repository/tech-floripa-certificates-*"
+    ]
+  }
 }
 
 resource "aws_iam_policy" "github_actions_policy" {
