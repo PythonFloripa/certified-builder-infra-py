@@ -52,7 +52,9 @@ jobs:
           fi
 
           echo "matrix={\"include\":$MATRIX}" >> $GITHUB_OUTPUT
-          echo "Matrix: {\"include\":$MATRIX}"  plan:
+          echo "Matrix: {\"include\":$MATRIX}"
+
+  plan:
     needs: detect
     if: needs.detect.outputs.matrix != '{"include":[]}'
     strategy:
