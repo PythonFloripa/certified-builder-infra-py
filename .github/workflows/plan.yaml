@@ -68,12 +68,11 @@ jobs:
           name: tfplan
           path: terraform/tfplan
 
+      - name: Show Terraform Plan
+        run: cd terraform && terraform show -no-color tfplan > plan.txt
+
       - name: Comment PR with Terraform Plan
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           recreate: true
-          message: |
-            ## :terraform: Terraform Plan
-            ```hcl
-            $(cd terraform && terraform show -no-color tfplan)
-            ```
+          path: terraform/plan.txt
