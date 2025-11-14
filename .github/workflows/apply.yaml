@@ -31,9 +31,6 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
           role-session-name: TerraformApplySession
 
-      - name: Check AWS Credentials
-        run: aws sts get-caller-identity
-
       - name: Checkout Repository
         uses: actions/checkout@v5
 
