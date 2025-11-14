@@ -7,15 +7,15 @@ terraform {
       version = ">= 6.21.0, < 7.0.0"
     }
   }
-    backend "s3" {
-      bucket = "tech-floripa-certificates-dev-tf-state"
-      key    = "shared/terraform.tfstate"
-      region = "us-east-1"
-    }
+  backend "s3" {
+    bucket = "tech-floripa-certificates-dev-tf-state"
+    key    = "shared/terraform.tfstate"
+    region = "us-east-1"
+  }
 }
 
 provider "aws" {
-  region  = var.aws_region
+  region = var.aws_region
 
   default_tags {
     tags = {
@@ -25,3 +25,52 @@ provider "aws" {
     }
   }
 }
+
+resource "aws_s3_bucket" "tech_floripa_certificates_dev_tf_state" {
+  bucket = "tech-floripa-certificates-dev-tf-state"
+}
+
+resource "aws_s3_bucket" "tech_floripa_plan_artifacts" {
+  bucket = "tech-floripa-plan-artifacts"
+}
+
+resource "aws_s3_bucket_policy" "tech_floripa_certificates_dev_tf_state_policy" {
+  bucket = aws_s3_bucket.tech_floripa_certificates_dev_tf_state.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          AWS = "arn:aws:iam::${var.aws_account_id}:role/github-actions-assume-role"
+        }
+        Action = "s3:*"
+        Resource = [
+          aws_s3_bucket.tech_floripa_certificates_dev_tf_state.arn,
+          "${aws_s3_bucket.tech_floripa_certificates_dev_tf_state.arn}/*"
+        ]
+      }
+    ]
+  })
+}
+
+resource "aws_s3_bucket_policy" "tech_floripa_plan_artifacts_policy" {
+  bucket = aws_s3_bucket.tech_floripa_plan_artifacts.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          AWS = "arn:aws:iam::${var.aws_account_id}:role/github-actions-assume-role"
+        }
+        Action = "s3:*"
+        Resource = [
+          aws_s3_bucket.tech_floripa_plan_artifacts.arn,
+          "${aws_s3_bucket.tech_floripa_plan_artifacts.arn}/*"
+        ]
+      }
+    ]
+  })
+}
+
