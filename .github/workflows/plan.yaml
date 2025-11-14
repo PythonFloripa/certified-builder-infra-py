@@ -65,11 +65,28 @@ jobs:
           terraform plan -input=false -out=tfplan
           terraform show -no-color tfplan > plan.txt
 
+      - name: Terraform Plan (full) and Summary
+        run: |
+          cd terraform
+          # Full plan for apply / debugging
+          terraform plan -input=false -out=tfplan
+
+          # Human-friendly summary only (no provider boilerplate)
+          terraform show -no-color tfplan \
+            | sed -n '/Terraform will perform the following actions:/,$p' \
+            > plan-summary.txt
+
       - name: Comment PR with Terraform Plan
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           recreate: true
-          path: terraform/plan.txt
+          message: |
+            ## :terraform: Terraform Plan Summary
+
+            ```hcl
+            ${file}
+            ```
+          path: terraform/plan-summary.txt
 
       - name: Upload tfplan to S3
         run: aws s3 cp terraform/tfplan s3://tech-floripa-plan-artifacts/${{ github.event.pull_request.number }}/tfplan
