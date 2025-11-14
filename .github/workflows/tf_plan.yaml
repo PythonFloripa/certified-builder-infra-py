@@ -19,6 +19,7 @@ env:
   TF_VAR_tech_floripa_certificate_validate_url: ${{ secrets.TECH_FLORIPA_CERTIFICATE_VALIDATE_URL }}
   TF_VAR_api_key_value: ${{ secrets.API_KEY_VALUE }}
   TFPLAN_S3_BUCKET: tech-floripa-plan-artifacts
+  GH_TOKEN: ${{ github.token }}
 
 permissions:
   contents: read
@@ -38,34 +39,20 @@ jobs:
       - name: Detect changed Terraform directories
         id: set-matrix
         run: |
-          # Get changed files compared to main
-          CHANGED_FILES=$(git diff --name-only origin/main...HEAD)
+          FILES=$(gh pr view ${{ github.event.pull_request.number }} --json files --jq '.files[].path')
 
-          DIRS=()
+          MATRIX="[]"
 
-          # Check which terraform directories changed
-          if echo "$CHANGED_FILES" | grep -q "^terraform/env/dev/"; then
-            DIRS+=('{"dir":"terraform/env/dev","env":"dev"}')
+          if echo "$FILES" | grep -q "^terraform/env/dev/"; then
+            MATRIX=$(echo "$MATRIX" | jq '. + [{"dir":"terraform/env/dev","env":"dev"}]')
           fi
 
-          if echo "$CHANGED_FILES" | grep -q "^terraform/" | grep -qv "^terraform/env/"; then
-            DIRS+=('{"dir":"terraform","env":"shared"}')
+          if echo "$FILES" | grep "^terraform/" | grep -qv "^terraform/env/"; then
+            MATRIX=$(echo "$MATRIX" | jq '. + [{"dir":"terraform","env":"shared"}]')
           fi
 
-          # Build JSON matrix
-          if [ ${#DIRS[@]} -eq 0 ]; then
-            echo "matrix={\"include\":[]}" >> $GITHUB_OUTPUT
-            echo "No Terraform changes detected"
-          else
-            JSON="["
-            for i in "${!DIRS[@]}"; do
-              [ $i -gt 0 ] && JSON+=","
-              JSON+="${DIRS[$i]}"
-            done
-            JSON+="]"
-            echo "matrix={\"include\":$JSON}" >> $GITHUB_OUTPUT
-            echo "Detected changes in: ${DIRS[@]}"
-          fi
+          echo "matrix={\"include\":$MATRIX}" >> $GITHUB_OUTPUT
+          echo "Matrix: {\"include\":$MATRIX}"
 
   plan:
     needs: detect
