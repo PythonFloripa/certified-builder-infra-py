@@ -71,10 +71,10 @@ resource "aws_s3_bucket_policy" "tech_floripa_certificates_dev_tf_state_policy" 
         ]
       },
       {
-        Sid    = "DenyAllOthers"
-        Effect = "Deny"
+        Sid       = "DenyAllOthers"
+        Effect    = "Deny"
         Principal = "*"
-        Action = "s3:*"
+        Action    = "s3:*"
         Resource = [
           aws_s3_bucket.tech_floripa_certificates_dev_tf_state.arn,
           "${aws_s3_bucket.tech_floripa_certificates_dev_tf_state.arn}/*"
@@ -107,10 +107,10 @@ resource "aws_s3_bucket_policy" "tech_floripa_plan_artifacts_policy" {
         ]
       },
       {
-        Sid    = "DenyAllOthers"
-        Effect = "Deny"
+        Sid       = "DenyAllOthers"
+        Effect    = "Deny"
         Principal = "*"
-        Action = "s3:*"
+        Action    = "s3:*"
         Resource = [
           aws_s3_bucket.tech_floripa_plan_artifacts.arn,
           "${aws_s3_bucket.tech_floripa_plan_artifacts.arn}/*"
