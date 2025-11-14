@@ -44,17 +44,15 @@ jobs:
           MATRIX="[]"
 
           if echo "$FILES" | grep -q "^terraform/env/dev/"; then
-            MATRIX=$(echo "$MATRIX" | jq '. + [{"dir":"terraform/env/dev","env":"dev"}]')
+            MATRIX=$(echo "$MATRIX" | jq -c '. + [{"dir":"terraform/env/dev","env":"dev"}]')
           fi
 
           if echo "$FILES" | grep "^terraform/" | grep -qv "^terraform/env/"; then
-            MATRIX=$(echo "$MATRIX" | jq '. + [{"dir":"terraform","env":"shared"}]')
+            MATRIX=$(echo "$MATRIX" | jq -c '. + [{"dir":"terraform","env":"shared"}]')
           fi
 
           echo "matrix={\"include\":$MATRIX}" >> $GITHUB_OUTPUT
-          echo "Matrix: {\"include\":$MATRIX}"
-
-  plan:
+          echo "Matrix: {\"include\":$MATRIX}"  plan:
     needs: detect
     if: needs.detect.outputs.matrix != '{"include":[]}'
     strategy:
