@@ -7,13 +7,6 @@ variable "aws_region" {
   default     = "us-east-1"
 }
 
-variable "aws_profile" {
-  description = "AWS Profile para autenticação"
-  type        = string
-  default     = "default"
-}
-
-
 variable "aws_account_id" {
   description = "ID da conta AWS onde os recursos serão criados"
   type        = string
@@ -24,11 +17,13 @@ variable "aws_account_id" {
 variable "github_org" {
   description = "Organização do GitHub"
   type        = string
+  default     = "PythonFloripa"
 }
 
 variable "github_repo" {
   description = "Repositório do GitHub"
   type        = string
+  default     = "certified-builder-infra-py"
 }
 
 variable "github_actions_role_arn" {
@@ -52,6 +47,7 @@ variable "environment" {
 variable "project_name" {
   description = "Nome do projeto"
   type        = string
+  default     = "tech-floripa-certificates"
 }
 
 # Configuração do DynamoDB - Modo de Baixo Custo
@@ -138,4 +134,5 @@ variable "tech_floripa_certificate_validate_url" {
 variable "tech_floripa_logo_url" {
   description = "URL do logo do Tech Floripa"
   type        = string
+  default     = "https://tech.floripa.br/wp-content/uploads/2025/03/Tech-Floripa-Qr.png"
 }

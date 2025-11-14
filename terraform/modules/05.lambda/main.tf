@@ -25,7 +25,7 @@ resource "aws_iam_role" "lambda_execution_role" {
   }
 }
 
-# Policy básica para execução do Lambda 
+# Policy básica para execução do Lambda
 resource "aws_iam_role_policy_attachment" "lambda_basic_execution" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
   role       = aws_iam_role.lambda_execution_role.name
@@ -191,26 +191,26 @@ data "aws_ecr_image" "api_lambda_image" {
 # Função Lambda
 resource "aws_lambda_function" "api_function" {
   function_name = "${var.project_name}-api-${var.environment}"
-  role         = aws_iam_role.lambda_execution_role.arn
-  
+  role          = aws_iam_role.lambda_execution_role.arn
+
   # Configuração da imagem Docker usando digest para forçar atualização
   package_type = "Image"
   image_uri    = "${var.ecr_api_repository_url}@${data.aws_ecr_image.api_lambda_image.image_digest}"
-  
+
   # Configurações de performance e timeout
   timeout     = var.lambda_timeout
   memory_size = var.lambda_memory_size
-  
+
   # Variáveis de ambiente baseadas no env.example
   environment {
     variables = {
-      REGION                 = var.aws_region
-      BUILDER_QUEUE_URL      = var.builder_queue_url
-      S3_BUCKET_NAME         = var.s3_bucket_name
-      ENVIRONMENT            = var.environment
-      PROJECT_NAME           = var.project_name
-      URL_SERVICE_TECH       = var.url_service_tech
-      PREFIX_API_VERSION     = var.prefix_api_version
+      REGION             = var.aws_region
+      BUILDER_QUEUE_URL  = var.builder_queue_url
+      S3_BUCKET_NAME     = var.s3_bucket_name
+      ENVIRONMENT        = var.environment
+      PROJECT_NAME       = var.project_name
+      URL_SERVICE_TECH   = var.url_service_tech
+      PREFIX_API_VERSION = var.prefix_api_version
     }
   }
 
@@ -247,22 +247,22 @@ data "aws_ecr_image" "builder_lambda_image" {
 
 resource "aws_lambda_function" "builder_funcition" {
   function_name = "${var.project_name}-builder-${var.environment}"
-  role         = aws_iam_role.lambda_builder_execution_role.arn
-  package_type = "Image"
+  role          = aws_iam_role.lambda_builder_execution_role.arn
+  package_type  = "Image"
   # Configuração da imagem Docker usando digest para forçar atualização
-  image_uri    = "${var.ecr_builder_repository_url}@${data.aws_ecr_image.builder_lambda_image.image_digest}"
+  image_uri   = "${var.ecr_builder_repository_url}@${data.aws_ecr_image.builder_lambda_image.image_digest}"
   timeout     = var.lambda_timeout
   memory_size = var.lambda_memory_size
 
   environment {
     variables = {
-      REGION                 = var.aws_region
-      QUEUE_URL              = var.notification_queue_url
-      BUCKET_NAME            = var.s3_bucket_name
-      SERVICE_URL_REGISTRATION_API_SOLANA = var.service_url_registration_api_solana
+      REGION                                  = var.aws_region
+      QUEUE_URL                               = var.notification_queue_url
+      BUCKET_NAME                             = var.s3_bucket_name
+      SERVICE_URL_REGISTRATION_API_SOLANA     = var.service_url_registration_api_solana
       SERVICE_API_KEY_REGISTRATION_API_SOLANA = var.service_api_key_registration_api_solana
-      TECH_FLORIPA_CERTIFICATE_VALIDATE_URL = var.tech_floripa_certificate_validate_url
-      TECH_FLORIPA_LOGO_URL = var.tech_floripa_logo_url
+      TECH_FLORIPA_CERTIFICATE_VALIDATE_URL   = var.tech_floripa_certificate_validate_url
+      TECH_FLORIPA_LOGO_URL                   = var.tech_floripa_logo_url
     }
   }
 
@@ -295,16 +295,16 @@ resource "aws_cloudwatch_log_group" "builder_logs" {
 resource "aws_lambda_event_source_mapping" "builder_sqs_trigger" {
   event_source_arn = var.builder_queue_arn
   function_name    = aws_lambda_function.builder_funcition.arn
-  
+
   # Configurações do processamento em lote
-  batch_size                         = 1    # Processa 1 mensagem por vez
-  maximum_batching_window_in_seconds = 5    # Aguarda até 5 segundos para formar um lote
+  batch_size                         = 1 # Processa 1 mensagem por vez
+  maximum_batching_window_in_seconds = 5 # Aguarda até 5 segundos para formar um lote
   scaling_config {
     maximum_concurrency = 3
   }
   # Configurações de retry e erro
   function_response_types = ["ReportBatchItemFailures"]
-  
+
   tags = {
     Name        = "${var.project_name}-builder-sqs-trigger-${var.environment}"
     Environment = var.environment
@@ -414,12 +414,12 @@ data "aws_ecr_image" "notification_lambda_image" {
 # Função Lambda para processamento de notificações
 resource "aws_lambda_function" "notification_function" {
   function_name = "${var.project_name}-notification-${var.environment}"
-  role         = aws_iam_role.lambda_notification_execution_role.arn
-  package_type = "Image"
-  
+  role          = aws_iam_role.lambda_notification_execution_role.arn
+  package_type  = "Image"
+
   # Configuração da imagem Docker usando digest para forçar atualização
-  image_uri    = "${var.ecr_notification_repository_url}@${data.aws_ecr_image.notification_lambda_image.image_digest}"
-  
+  image_uri = "${var.ecr_notification_repository_url}@${data.aws_ecr_image.notification_lambda_image.image_digest}"
+
   # Configurações de performance e timeout
   timeout     = var.lambda_timeout
   memory_size = var.lambda_memory_size
@@ -427,12 +427,12 @@ resource "aws_lambda_function" "notification_function" {
   # Variáveis de ambiente para a Lambda de notificação
   environment {
     variables = {
-      REGION                    = var.aws_region
-      S3_BUCKET_NAME            = var.s3_bucket_name
-      ENVIRONMENT               = var.environment
-      PROJECT_NAME              = var.project_name
-      URL_SERVICE_TECH          = var.url_service_tech
-      API_GATEWAY_DOWNLOAD_URL  = var.api_gateway_download_url
+      REGION                   = var.aws_region
+      S3_BUCKET_NAME           = var.s3_bucket_name
+      ENVIRONMENT              = var.environment
+      PROJECT_NAME             = var.project_name
+      URL_SERVICE_TECH         = var.url_service_tech
+      API_GATEWAY_DOWNLOAD_URL = var.api_gateway_download_url
     }
   }
 
@@ -465,17 +465,17 @@ resource "aws_cloudwatch_log_group" "notification_logs" {
 resource "aws_lambda_event_source_mapping" "notification_sqs_trigger" {
   event_source_arn = var.notification_queue_arn
   function_name    = aws_lambda_function.notification_function.arn
-  
+
   # Configurações do processamento em lote
-  batch_size                         = 1    # Processa 1 mensagem por vez
-  maximum_batching_window_in_seconds = 5    # Aguarda até 5 segundos para formar um lote
+  batch_size                         = 1 # Processa 1 mensagem por vez
+  maximum_batching_window_in_seconds = 5 # Aguarda até 5 segundos para formar um lote
   scaling_config {
-    maximum_concurrency = 2  # Limite menor para notificações
+    maximum_concurrency = 2 # Limite menor para notificações
   }
-  
+
   # Configurações de retry e erro
   function_response_types = ["ReportBatchItemFailures"]
-  
+
   tags = {
     Name        = "${var.project_name}-notification-sqs-trigger-${var.environment}"
     Environment = var.environment
