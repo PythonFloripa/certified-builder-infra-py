@@ -38,76 +38,6 @@ resource "aws_iam_role" "github_actions_assume_role" {
 
 ### IAM Permissions for Github Action Role
 data "aws_iam_policy_document" "github_action_permissions" {
-  #   # SQS
-  #   statement {
-  #     effect = "Allow"
-
-  #     actions = [
-
-  #     ]
-
-  #     resources = [
-  #       "arn:aws:sqs:${var.aws_region}:${var.aws_account_id}:${var.project_name}-*",
-  #     ]
-  #   }
-  #   # ECR
-  #   statement {
-  #     effect = "Allow"
-
-  #     actions = [
-
-  #     ]
-
-  #     resources = [
-  #       "arn:aws:ecr:${var.aws_region}:${var.aws_account_id}:repository/${var.project_name}-*",
-  #     ]
-  #   }
-  #   # DynamoDB
-  #   statement {
-  #     effect = "Allow"
-
-  #     actions = [
-
-  #     ]
-  #     resources = [
-  #       "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${var.project_name}-*",
-  #     ]
-  #   }
-  #   # API Gateway
-  #   statement {
-  #     effect = "Allow"
-
-  #     actions = [
-  #     ]
-
-  #     resources = [
-  #       "arn:aws:apigateway:*::/*",
-  #     ]
-  #   }
-  #   # Lambda
-  #   statement {
-  #     effect = "Allow"
-
-  #     actions = [
-
-  #     ]
-  #     resources = [
-  #       "arn:aws:lambda:${var.aws_region}:${var.aws_account_id}:function:${var.project_name}-*",
-  #     ]
-  #   }
-  #   # CloudWatch Logs
-  #   statement {
-  #     effect = "Allow"
-
-  #     actions = [
-
-  #     ]
-
-  #     resources = [
-  #       "arn:aws:logs:${var.aws_region}:${var.aws_account_id}:log-group:${var.project_name}-*",
-  #     ]
-  #   }
-
   # S3
   statement {
     effect = "Allow"
@@ -123,18 +53,6 @@ data "aws_iam_policy_document" "github_action_permissions" {
       "arn:aws:s3:::tech-floripa-certificates-dev-tf-state/*"
     ]
   }
-
-  #   # IAM
-  #   statement {
-  #     effect = "Allow"
-
-  #     actions = [
-  #     ]
-
-  #     resources = [
-
-  #     ]
-  #   }
 }
 
 resource "aws_iam_policy" "github_actions_policy" {
