@@ -76,10 +76,13 @@ data "aws_iam_policy_document" "github_action_permissions" {
       "s3:PutObject",
       "s3:ListBucket",
       "s3:DeleteObject",
+      "s3:CreateBucket",
     ]
     resources = [
       "arn:aws:s3:::tech-floripa-certificates-dev-tf-state",
-      "arn:aws:s3:::tech-floripa-certificates-dev-tf-state/*"
+      "arn:aws:s3:::tech-floripa-certificates-dev-tf-state/*",
+      "arn:aws:s3:::tech-floripa-plan-artifacts",
+      "arn:aws:s3:::tech-floripa-plan-artifacts/*"
     ]
   }
 }
