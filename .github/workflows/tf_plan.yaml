@@ -55,16 +55,9 @@ jobs:
 
           terraform show -no-color tfplan > plan-output.txt
           echo "## Terraform Plan" > plan-comment.md
-
-          if [ $EXIT_CODE -eq 0 ]; then
-            echo "**No infrastructure changes detected.**" >> plan-comment.md
-            echo "" >> plan-comment.md
-            echo "Your infrastructure matches the configuration." >> plan-comment.md
-          else
-            echo '```hcl' >> plan-comment.md
-            cat plan-output.txt >> plan-comment.md
-            echo '```' >> plan-comment.md
-          fi
+          echo '```hcl' >> plan-comment.md
+          cat plan-output.txt >> plan-comment.md
+          echo '```' >> plan-comment.md
         working-directory: terraform
 
       - name: Comment PR
