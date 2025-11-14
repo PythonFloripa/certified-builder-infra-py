@@ -54,28 +54,12 @@ jobs:
           PR_NUMBER=${{ steps.get_pr.outputs.pr_number }}
 
           # Download plan from S3
-          if ! aws s3 cp s3://${{ env.TFPLAN_S3_BUCKET }}/$PR_NUMBER/tfplan tfplan; then
-            echo "ERROR: Failed to download plan from S3 (s3://${{ env.TFPLAN_S3_BUCKET }}/$PR_NUMBER/tfplan)"
-            echo "Plan may not have been uploaded or has expired"
-            exit 1
-          fi
+          aws s3 cp s3://${{ env.TFPLAN_S3_BUCKET }}/$PR_NUMBER/tfplan tfplan
 
-          # Generate fresh plan with exit code detection
-          set +e
-          terraform plan -input=false -out=tfplan-new -detailed-exitcode
-          EXIT_CODE=$?
-          set -e
+          # Generate fresh plan for comparison
+          terraform plan -input=false -out=tfplan-new
 
-          if [ $EXIT_CODE -eq 1 ]; then
-            echo "ERROR: terraform plan failed"
-            exit 1
-          elif [ $EXIT_CODE -eq 0 ]; then
-            echo "No changes detected, skipping apply"
-            echo "has_changes=false" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-
-          # Compare plans
+          # Compare plans to detect drift
           terraform show -no-color tfplan > plan-old.txt
           terraform show -no-color tfplan-new > plan-new.txt
 
@@ -85,11 +69,17 @@ jobs:
             exit 1
           fi
 
-          echo "has_changes=true" >> $GITHUB_OUTPUT
+          # Check if plan has no changes
+          if grep -q "No changes" plan-old.txt; then
+            echo "No changes detected in plan, skipping apply"
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          fi
         working-directory: terraform
 
       - name: Terraform Apply
-        if: steps.verify.outputs.has_changes == 'true'
+        if: steps.get_pr.outputs.pr_number && steps.verify.outputs.has_changes == 'true'
         run: terraform apply -input=false tfplan
         working-directory: terraform
 
