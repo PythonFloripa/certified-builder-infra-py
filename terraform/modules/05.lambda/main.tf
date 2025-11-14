@@ -245,7 +245,7 @@ data "aws_ecr_image" "builder_lambda_image" {
   image_tag       = var.image_tag
 }
 
-resource "aws_lambda_function" "builder_funcition" {
+resource "aws_lambda_function" "builder_function" {
   function_name = "${var.project_name}-builder-${var.environment}"
   role          = aws_iam_role.lambda_builder_execution_role.arn
   package_type  = "Image"
@@ -280,7 +280,7 @@ resource "aws_lambda_function" "builder_funcition" {
 }
 
 resource "aws_cloudwatch_log_group" "builder_logs" {
-  name              = "/aws/lambda/${aws_lambda_function.builder_funcition.function_name}"
+  name              = "/aws/lambda/${aws_lambda_function.builder_function.function_name}"
   retention_in_days = var.log_retention_days
 
   tags = {
@@ -294,7 +294,7 @@ resource "aws_cloudwatch_log_group" "builder_logs" {
 # Quando uma mensagem chegar na fila, a Lambda será executada automaticamente
 resource "aws_lambda_event_source_mapping" "builder_sqs_trigger" {
   event_source_arn = var.builder_queue_arn
-  function_name    = aws_lambda_function.builder_funcition.arn
+  function_name    = aws_lambda_function.builder_function.arn
 
   # Configurações do processamento em lote
   batch_size                         = 1 # Processa 1 mensagem por vez
