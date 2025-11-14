@@ -59,34 +59,23 @@ jobs:
       - name: Terraform Init
         run: cd terraform && terraform init -input=false
 
-      - name: Terraform Plan and Show
+      - name: Terraform Plan and Generate Markdown
         run: |
           cd terraform
           terraform plan -input=false -out=tfplan
-          terraform show -no-color tfplan > plan.txt
 
-      - name: Terraform Plan (full) and Summary
-        run: |
-          cd terraform
-          # Full plan for apply / debugging
-          terraform plan -input=false -out=tfplan
-
-          # Human-friendly summary only (no provider boilerplate)
-          terraform show -no-color tfplan \
-            | sed -n '/Terraform will perform the following actions:/,$p' \
-            > plan-summary.txt
+          # Create markdown file with header and code block
+          echo "## :terraform: Terraform Plan Summary" > plan-comment.md
+          echo "" >> plan-comment.md
+          echo '```hcl' >> plan-comment.md
+          terraform show -no-color tfplan | sed -n '/Terraform will perform the following actions:/,$p' >> plan-comment.md
+          echo '```' >> plan-comment.md
 
       - name: Comment PR with Terraform Plan
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           recreate: true
-          message: |
-            ## :terraform: Terraform Plan Summary
-
-            ```hcl
-            ${file}
-            ```
-          path: terraform/plan-summary.txt
+          path: terraform/plan-comment.md
 
       - name: Upload tfplan to S3
         run: aws s3 cp terraform/tfplan s3://tech-floripa-plan-artifacts/${{ github.event.pull_request.number }}/tfplan
