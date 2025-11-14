@@ -28,8 +28,8 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ env.GH_ACTIONS_ROLE_ARN }}
-          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ env.TF_VAR_github_actions_role_arn }}
+          aws-region: ${{ env.TF_VAR_aws_region }}
           role-session-name: TerraformApplySession
 
       - name: Checkout Repository
