@@ -28,10 +28,29 @@ provider "aws" {
 
 resource "aws_s3_bucket" "tech_floripa_certificates_dev_tf_state" {
   bucket = "tech-floripa-certificates-dev-tf-state"
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "aws_s3_bucket" "tech_floripa_plan_artifacts" {
   bucket = "tech-floripa-plan-artifacts"
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "tech_floripa_plan_artifacts_lifecycle" {
+  bucket = aws_s3_bucket.tech_floripa_plan_artifacts.id
+
+  rule {
+    id     = "delete-old-objects"
+    status = "Enabled"
+
+    filter {}
+
+    expiration {
+      days = 7
+    }
+  }
 }
 
 resource "aws_s3_bucket_policy" "tech_floripa_certificates_dev_tf_state_policy" {
