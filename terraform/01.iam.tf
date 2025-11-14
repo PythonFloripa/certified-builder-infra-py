@@ -43,11 +43,18 @@ data "aws_iam_policy_document" "github_action_permissions" {
     effect = "Allow"
     actions = [
       "iam:GetOpenIDConnectProvider",
-      "iam:GetPolicy"
+      "iam:GetPolicy",
+      "iam:GetRole",
+      "iam:GetPolicyVersion",
+      "iam:ListRoles",
+      "iam:ListPolicies",
+      "iam:ListPolicyVersions",
+      "iam:ListOpenIDConnectProviders"
     ]
     resources = [
       "arn:aws:iam::${var.aws_account_id}:oidc-provider/token.actions.githubusercontent.com",
-      "arn:aws:iam::${var.aws_account_id}:policy/github-actions-policy"
+      "arn:aws:iam::${var.aws_account_id}:policy/github-actions-policy",
+      "arn:aws:iam::${var.aws_account_id}:role/github-actions-assume-role"
     ]
   }
   # S3
