@@ -26,7 +26,52 @@ permissions:
   id-token: write
 
 jobs:
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed Terraform directories
+        id: set-matrix
+        run: |
+          # Get changed files compared to main
+          CHANGED_FILES=$(git diff --name-only origin/main...HEAD)
+
+          DIRS=()
+
+          # Check which terraform directories changed
+          if echo "$CHANGED_FILES" | grep -q "^terraform/env/dev/"; then
+            DIRS+=('{"dir":"terraform/env/dev","env":"dev"}')
+          fi
+
+          if echo "$CHANGED_FILES" | grep -q "^terraform/" | grep -qv "^terraform/env/"; then
+            DIRS+=('{"dir":"terraform","env":"shared"}')
+          fi
+
+          # Build JSON matrix
+          if [ ${#DIRS[@]} -eq 0 ]; then
+            echo "matrix={\"include\":[]}" >> $GITHUB_OUTPUT
+            echo "No Terraform changes detected"
+          else
+            JSON="["
+            for i in "${!DIRS[@]}"; do
+              [ $i -gt 0 ] && JSON+=","
+              JSON+="${DIRS[$i]}"
+            done
+            JSON+="]"
+            echo "matrix={\"include\":$JSON}" >> $GITHUB_OUTPUT
+            echo "Detected changes in: ${DIRS[@]}"
+          fi
+
   plan:
+    needs: detect
+    if: needs.detect.outputs.matrix != '{"include":[]}'
+    strategy:
+      matrix: ${{ fromJson(needs.detect.outputs.matrix) }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -37,33 +82,33 @@ jobs:
         with:
           role-to-assume: ${{ env.TF_VAR_github_actions_role_arn }}
           aws-region: ${{ env.TF_VAR_aws_region }}
-          role-session-name: TerraformPlanSession
+          role-session-name: TerraformPlanSession-${{ matrix.env }}
 
       - name: Terraform Init
         run: terraform init -input=false -upgrade=false
-        working-directory: terraform
+        working-directory: ${{ matrix.dir }}
 
       - name: Terraform Plan
         run: |
           set -euo pipefail
           terraform plan -input=false -out=tfplan
           terraform show -no-color tfplan > plan-output.txt
-          echo "## Terraform Plan" > plan-comment.md
+          echo "## Terraform Plan (${{ matrix.env }})" > plan-comment.md
           echo '```hcl' >> plan-comment.md
           cat plan-output.txt >> plan-comment.md
           echo '```' >> plan-comment.md
-        working-directory: terraform
+        working-directory: ${{ matrix.dir }}
 
       - name: Comment PR
         if: github.event.pull_request.number
         uses: marocchino/sticky-pull-request-comment@v2
         with:
+          header: terraform-plan-${{ matrix.env }}
           recreate: true
-          path: terraform/plan-comment.md
+          path: ${{ matrix.dir }}/plan-comment.md
 
       - name: Upload Plan to S3
         if: github.event.pull_request.number
         run: |
-          aws s3 cp terraform/tfplan \
-            s3://${{ env.TFPLAN_S3_BUCKET }}/${{ github.event.pull_request.number }}/tfplan
-
+          aws s3 cp ${{ matrix.dir }}/tfplan \
+            s3://${{ env.TFPLAN_S3_BUCKET }}/${{ matrix.env }}/${{ github.event.pull_request.number }}/tfplan

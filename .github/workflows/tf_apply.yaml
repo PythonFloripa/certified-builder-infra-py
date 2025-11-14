@@ -21,7 +21,63 @@ permissions:
   id-token: write
 
 jobs:
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Get PR Number
+        id: get_pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PR_NUMBER=$(gh pr list --state merged --json number,mergeCommit --jq ".[] | select(.mergeCommit.oid == \"${{ github.sha }}\") | .number")
+          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+
+      - name: Detect changed Terraform directories from PR
+        if: steps.get_pr.outputs.pr_number
+        id: set-matrix
+        run: |
+          PR_NUMBER=${{ steps.get_pr.outputs.pr_number }}
+
+          # Get changed files from the merged PR
+          CHANGED_FILES=$(gh pr view $PR_NUMBER --json files --jq '.files[].path')
+
+          DIRS=()
+
+          # Check which terraform directories changed
+          if echo "$CHANGED_FILES" | grep -q "^terraform/env/dev/"; then
+            DIRS+=('{"dir":"terraform/env/dev","env":"dev","pr":"'$PR_NUMBER'"}')
+          fi
+
+          if echo "$CHANGED_FILES" | grep -q "^terraform/" | grep -qv "^terraform/env/"; then
+            DIRS+=('{"dir":"terraform","env":"shared","pr":"'$PR_NUMBER'"}')
+          fi
+
+          # Build JSON matrix
+          if [ ${#DIRS[@]} -eq 0 ]; then
+            echo "matrix={\"include\":[]}" >> $GITHUB_OUTPUT
+            echo "No Terraform changes detected"
+          else
+            JSON="["
+            for i in "${!DIRS[@]}"; do
+              [ $i -gt 0 ] && JSON+=","
+              JSON+="${DIRS[$i]}"
+            done
+            JSON+="]"
+            echo "matrix={\"include\":$JSON}" >> $GITHUB_OUTPUT
+            echo "Detected changes in: ${DIRS[@]}"
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+
   apply:
+    needs: detect
+    if: needs.detect.outputs.matrix != '{"include":[]}'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -34,52 +90,96 @@ jobs:
           aws-region: ${{ env.TF_VAR_aws_region }}
           role-session-name: TerraformApplySession
 
-      - name: Terraform Init
-        run: terraform init -input=false -upgrade=false
-        working-directory: terraform
-
-      - name: Get PR Number
-        id: get_pr
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Parse environments
+        id: parse
         run: |
-          PR_NUMBER=$(gh pr list --state merged --json number,mergeCommit --jq ".[] | select(.mergeCommit.oid == \"${{ github.sha }}\") | .number")
-          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+          MATRIX='${{ needs.detect.outputs.matrix }}'
 
-      - name: Download and Verify Plan
-        if: steps.get_pr.outputs.pr_number
-        id: verify
+          # Check if shared exists in matrix
+          SHARED=$(echo "$MATRIX" | jq -c '.include[] | select(.env == "shared")')
+          if [ -n "$SHARED" ]; then
+            echo "has_shared=true" >> $GITHUB_OUTPUT
+            echo "shared_dir=$(echo "$SHARED" | jq -r '.dir')" >> $GITHUB_OUTPUT
+            echo "shared_pr=$(echo "$SHARED" | jq -r '.pr')" >> $GITHUB_OUTPUT
+          else
+            echo "has_shared=false" >> $GITHUB_OUTPUT
+          fi
+
+          # Check if dev exists in matrix
+          DEV=$(echo "$MATRIX" | jq -c '.include[] | select(.env == "dev")')
+          if [ -n "$DEV" ]; then
+            echo "has_dev=true" >> $GITHUB_OUTPUT
+            echo "dev_dir=$(echo "$DEV" | jq -r '.dir')" >> $GITHUB_OUTPUT
+            echo "dev_pr=$(echo "$DEV" | jq -r '.pr')" >> $GITHUB_OUTPUT
+          else
+            echo "has_dev=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Apply Shared Infrastructure
+        if: steps.parse.outputs.has_shared == 'true'
         run: |
           set -euo pipefail
-          PR_NUMBER=${{ steps.get_pr.outputs.pr_number }}
 
-          # Download plan from S3
-          aws s3 cp s3://${{ env.TFPLAN_S3_BUCKET }}/$PR_NUMBER/tfplan tfplan
+          echo "========================================="
+          echo "Applying Terraform for: shared"
+          echo "========================================="
 
-          # Generate fresh plan for comparison
+          cd ${{ steps.parse.outputs.shared_dir }}
+
+          terraform init -input=false -upgrade=false
+
+          aws s3 cp s3://${{ env.TFPLAN_S3_BUCKET }}/shared/${{ steps.parse.outputs.shared_pr }}/tfplan tfplan
+
           terraform plan -input=false -out=tfplan-new
 
-          # Compare plans to detect drift
           terraform show -no-color tfplan > plan-old.txt
           terraform show -no-color tfplan-new > plan-new.txt
 
           if ! diff -q plan-old.txt plan-new.txt > /dev/null; then
-            echo "ERROR: Plans differ - state has changed since PR"
+            echo "ERROR: Plans differ for shared - state has changed since PR"
             diff plan-old.txt plan-new.txt || true
             exit 1
           fi
 
-          # Check if plan has no changes
           if grep -q "No changes" plan-old.txt; then
-            echo "No changes detected in plan, skipping apply"
-            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "No changes detected in plan for shared, skipping apply"
           else
-            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "Applying changes for shared..."
+            terraform apply -input=false tfplan
+            echo "✅ Apply completed for shared"
           fi
-        working-directory: terraform
 
-      - name: Terraform Apply
-        if: steps.get_pr.outputs.pr_number && steps.verify.outputs.has_changes == 'true'
-        run: terraform apply -input=false tfplan
-        working-directory: terraform
+      - name: Apply Dev Environment
+        if: steps.parse.outputs.has_dev == 'true'
+        run: |
+          set -euo pipefail
+
+          echo "========================================="
+          echo "Applying Terraform for: dev"
+          echo "========================================="
+
+          cd ${{ steps.parse.outputs.dev_dir }}
+
+          terraform init -input=false -upgrade=false
+
+          aws s3 cp s3://${{ env.TFPLAN_S3_BUCKET }}/dev/${{ steps.parse.outputs.dev_pr }}/tfplan tfplan
+
+          terraform plan -input=false -out=tfplan-new
+
+          terraform show -no-color tfplan > plan-old.txt
+          terraform show -no-color tfplan-new > plan-new.txt
+
+          if ! diff -q plan-old.txt plan-new.txt > /dev/null; then
+            echo "ERROR: Plans differ for dev - state has changed since PR"
+            diff plan-old.txt plan-new.txt || true
+            exit 1
+          fi
+
+          if grep -q "No changes" plan-old.txt; then
+            echo "No changes detected in plan for dev, skipping apply"
+          else
+            echo "Applying changes for dev..."
+            terraform apply -input=false tfplan
+            echo "✅ Apply completed for dev"
+          fi
 
