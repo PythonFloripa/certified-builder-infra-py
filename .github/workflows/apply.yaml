@@ -38,26 +38,6 @@ jobs:
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
 
-      - name: Validate Required Tools
-        run: |
-          set -euo pipefail
-          echo "Validating required tools..."
-          if ! command -v terraform &> /dev/null; then
-            echo "❌ ERROR: terraform binary not found in PATH"
-            exit 1
-          fi
-          if ! command -v aws &> /dev/null; then
-            echo "❌ ERROR: aws CLI not found in PATH"
-            exit 1
-          fi
-          echo "✅ terraform version: $(terraform version -json | jq -r '.terraform_version')"
-          echo "✅ aws CLI version: $(aws --version)"
-
-      - name: Log Tool Versions
-        run: |
-          echo "terraform: $(terraform version -json | jq -r '.terraform_version')"
-          echo "aws CLI: $(aws --version)"
-
       - name: Terraform Init
         run: |
           set -euo pipefail
@@ -71,10 +51,20 @@ jobs:
 
       - name: Get PR Number
         id: get_pr
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
+          set -euo pipefail
+          echo "Extracting PR number from merge commit..."
           # Get PR number from commit SHA using GitHub API
           PR_NUMBER=$(gh pr list --state merged --json number,mergeCommit --jq ".[] | select(.mergeCommit.oid == \"${{ github.sha }}\") | .number")
-          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+          if [ -z "$PR_NUMBER" ]; then
+            echo "ℹ️  No PR number found for commit ${{ github.sha }}"
+            echo "pr_number=" >> $GITHUB_OUTPUT
+          else
+            echo "✅ Found PR #$PR_NUMBER"
+            echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+          fi
 
       - name: Download Plan from S3
         if: steps.get_pr.outputs.pr_number != ''
