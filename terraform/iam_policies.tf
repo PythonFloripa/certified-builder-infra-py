@@ -1,8 +1,8 @@
 resource "aws_iam_policy" "github_actions_sqs" {
   name        = "github-actions-sqs"
   description = "Allow Terraform GitHub Actions to manage project SQS queues"
-  policy      = jsonencode({
-    Version   = "2012-10-17"
+  policy = jsonencode({
+    Version = "2012-10-17"
     Statement = [{
       Effect = "Allow"
       Action = [
@@ -24,8 +24,8 @@ resource "aws_iam_policy" "github_actions_sqs" {
 resource "aws_iam_policy" "github_actions_ecr" {
   name        = "github-actions-ecr"
   description = "Allow Terraform GitHub Actions to manage project ECR repositories"
-  policy      = jsonencode({
-    Version   = "2012-10-17"
+  policy = jsonencode({
+    Version = "2012-10-17"
     Statement = [{
       Effect = "Allow"
       Action = [
@@ -53,8 +53,8 @@ resource "aws_iam_policy" "github_actions_ecr" {
 resource "aws_iam_policy" "github_actions_dynamodb" {
   name        = "github-actions-dynamodb"
   description = "Allow Terraform GitHub Actions to manage DynamoDB tables"
-  policy      = jsonencode({
-    Version   = "2012-10-17"
+  policy = jsonencode({
+    Version = "2012-10-17"
     Statement = [{
       Effect = "Allow"
       Action = [
@@ -78,8 +78,8 @@ resource "aws_iam_policy" "github_actions_dynamodb" {
 resource "aws_iam_policy" "github_actions_apigw" {
   name        = "github-actions-apigateway"
   description = "Allow Terraform GitHub Actions to manage API Gateway resources"
-  policy      = jsonencode({
-    Version   = "2012-10-17"
+  policy = jsonencode({
+    Version = "2012-10-17"
     Statement = [{
       Effect = "Allow"
       Action = [
@@ -113,8 +113,8 @@ resource "aws_iam_policy" "github_actions_apigw" {
 resource "aws_iam_policy" "github_actions_lambda" {
   name        = "github-actions-lambda"
   description = "Allow Terraform GitHub Actions to manage Lambda functions"
-  policy      = jsonencode({
-    Version   = "2012-10-17"
+  policy = jsonencode({
+    Version = "2012-10-17"
     Statement = [
       {
         Effect = "Allow"
@@ -165,8 +165,8 @@ resource "aws_iam_policy" "github_actions_lambda" {
 resource "aws_iam_policy" "github_actions_logs" {
   name        = "github-actions-logs"
   description = "Allow Terraform GitHub Actions to manage Lambda log groups"
-  policy      = jsonencode({
-    Version   = "2012-10-17"
+  policy = jsonencode({
+    Version = "2012-10-17"
     Statement = [{
       Effect = "Allow"
       Action = [
@@ -189,8 +189,8 @@ resource "aws_iam_policy" "github_actions_logs" {
 resource "aws_iam_policy" "github_actions_s3" {
   name        = "github-actions-s3"
   description = "Allow Terraform GitHub Actions to manage project S3 buckets"
-  policy      = jsonencode({
-    Version   = "2012-10-17"
+  policy = jsonencode({
+    Version = "2012-10-17"
     Statement = [{
       Effect = "Allow"
       Action = [
@@ -214,8 +214,8 @@ resource "aws_iam_policy" "github_actions_s3" {
 resource "aws_iam_policy" "github_actions_iam_roles" {
   name        = "github-actions-iam-roles"
   description = "Allow Terraform GitHub Actions to manage Lambda IAM roles"
-  policy      = jsonencode({
-    Version   = "2012-10-17"
+  policy = jsonencode({
+    Version = "2012-10-17"
     Statement = [{
       Effect = "Allow"
       Action = [
@@ -237,27 +237,20 @@ resource "aws_iam_policy" "github_actions_iam_roles" {
         "arn:aws:iam::${var.aws_account_id}:role/${var.project_name}-lambda-builder-role",
         "arn:aws:iam::${var.aws_account_id}:role/${var.project_name}-lambda-notification-role"
       ]
-    },
-    {
-      Effect = "Allow"
-      Action = "iam:PassRole"
-      Resource = [
-        "arn:aws:iam::${var.aws_account_id}:role/${var.project_name}-lambda-role",
-        "arn:aws:iam::${var.aws_account_id}:role/${var.project_name}-lambda-builder-role",
-        "arn:aws:iam::${var.aws_account_id}:role/${var.project_name}-lambda-notification-role"
-      ]
-      Condition = {
-        StringEquals = {
-          "iam:PassedToService" = "lambda.amazonaws.com"
+      },
+      {
+        Effect = "Allow"
+        Action = "iam:PassRole"
+        Resource = [
+          "arn:aws:iam::${var.aws_account_id}:role/${var.project_name}-lambda-role",
+          "arn:aws:iam::${var.aws_account_id}:role/${var.project_name}-lambda-builder-role",
+          "arn:aws:iam::${var.aws_account_id}:role/${var.project_name}-lambda-notification-role"
+        ]
+        Condition = {
+          StringEquals = {
+            "iam:PassedToService" = "lambda.amazonaws.com"
+          }
         }
-        ArnEquals = {
-          "aws:ResourceArn" = [
-            "arn:aws:iam::${var.aws_account_id}:role/${var.project_name}-lambda-role",
-            "arn:aws:iam::${var.aws_account_id}:role/${var.project_name}-lambda-builder-role",
-            "arn:aws:iam::${var.aws_account_id}:role/${var.project_name}-lambda-notification-role"
-          ]
-        }
-      }
     }]
   })
 }
@@ -265,8 +258,8 @@ resource "aws_iam_policy" "github_actions_iam_roles" {
 resource "aws_iam_policy" "github_actions_iam_policies" {
   name        = "github-actions-iam-policies"
   description = "Allow Terraform GitHub Actions to manage project-scoped IAM policies"
-  policy      = jsonencode({
-    Version   = "2012-10-17"
+  policy = jsonencode({
+    Version = "2012-10-17"
     Statement = [{
       Effect = "Allow"
       Action = [
@@ -288,8 +281,8 @@ resource "aws_iam_policy" "github_actions_iam_policies" {
 resource "aws_iam_policy" "github_actions_oidc" {
   name        = "github-actions-iam-oidc"
   description = "Allow Terraform GitHub Actions to manage the GitHub OIDC provider"
-  policy      = jsonencode({
-    Version   = "2012-10-17"
+  policy = jsonencode({
+    Version = "2012-10-17"
     Statement = [{
       Effect = "Allow"
       Action = [
