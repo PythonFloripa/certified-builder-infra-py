@@ -8,7 +8,6 @@ on:
       - reopened
     branches:
       - 'main'
-  workflow_dispatch:
 
 env:
   TF_VAR_aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
@@ -27,38 +26,15 @@ permissions:
   id-token: write
 
 jobs:
-  detect:
-    runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
-
-      - name: Detect changed Terraform directories
-        id: set-matrix
-        run: |
-          FILES=$(gh pr view ${{ github.event.pull_request.number }} --json files --jq '.files[].path')
-
-          MATRIX="[]"
-
-          if echo "$FILES" | grep -q "^terraform/env/dev/"; then
-            MATRIX=$(echo "$MATRIX" | jq -c '. + [{"dir":"terraform/env/dev","env":"dev"}]')
-          fi
-
-          if echo "$FILES" | grep "^terraform/" | grep -qv "^terraform/env/"; then
-            MATRIX=$(echo "$MATRIX" | jq -c '. + [{"dir":"terraform","env":"shared"}]')
-          fi
-
-          echo "matrix={\"include\":$MATRIX}" >> $GITHUB_OUTPUT
-          echo "Matrix: {\"include\":$MATRIX}"
-
   plan:
-    needs: detect
-    if: needs.detect.outputs.matrix != '{"include":[]}'
     strategy:
-      matrix: ${{ fromJson(needs.detect.outputs.matrix) }}
+      matrix:
+        include:
+          - dir: terraform
+            env: shared
+          - dir: terraform/env/dev
+            env: dev
+
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5

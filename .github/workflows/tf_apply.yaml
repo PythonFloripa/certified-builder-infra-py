@@ -3,7 +3,6 @@ name: Terraform Apply (Main)
 on:
   push:
     branches: [main]
-  workflow_dispatch:
 
 env:
   TF_VAR_aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
