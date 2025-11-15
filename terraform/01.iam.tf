@@ -38,75 +38,108 @@ resource "aws_iam_role" "github_actions_assume_role" {
 
 ### IAM Permissions for Github Action Role
 data "aws_iam_policy_document" "github_action_permissions" {
-  # IAM permissions for Terraform plan/apply to read OIDC providers and policies
+  # IAM for Lambda roles and policies
   statement {
     effect = "Allow"
     actions = [
-      "iam:ListRoles",
-      "iam:ListPolicies",
-      "iam:ListPolicyVersions",
-      "iam:ListOpenIDConnectProviders",
+      "iam:CreateRole",
+      "iam:DeleteRole",
+      "iam:GetRole",
+      "iam:PutRolePolicy",
+      "iam:DeleteRolePolicy",
+      "iam:AttachRolePolicy",
+      "iam:DetachRolePolicy",
       "iam:ListRolePolicies",
       "iam:ListAttachedRolePolicies",
-      "iam:DeletePolicyVersion"
-
+      "iam:TagRole",
+      "iam:UntagRole",
+      "iam:GetOpenIDConnectProvider",
+      "iam:GetPolicy",
+      "iam:GetPolicyVersion"
     ]
     resources = ["*"]
   }
 
-  # Get*/Read actions can be scoped to specific ARNs
-  statement {
-    effect = "Allow"
-    actions = [
-      "iam:GetOpenIDConnectProvider",
-      "iam:GetPolicy",
-      "iam:GetRole",
-      "iam:GetPolicyVersion"
-    ]
-    resources = [
-      "arn:aws:iam::${var.aws_account_id}:oidc-provider/token.actions.githubusercontent.com",
-      "arn:aws:iam::${var.aws_account_id}:policy/github-actions-policy",
-      "arn:aws:iam::${var.aws_account_id}:role/github-actions-assume-role"
-    ]
-  }
   # S3
   statement {
     effect = "Allow"
-
     actions = [
+      "s3:CreateBucket",
+      "s3:DeleteBucket",
+      "s3:GetBucketAcl",
+      "s3:GetBucketCors",
+      "s3:GetBucketPolicy",
+      "s3:GetBucketWebsite",
+      "s3:PutBucketPolicy",
+      "s3:PutBucketWebsite",
+      "s3:DeleteBucketPolicy",
+      "s3:DeleteBucketWebsite",
       "s3:GetObject",
       "s3:PutObject",
-      "s3:ListBucket",
       "s3:DeleteObject",
-      "s3:CreateBucket",
+      "s3:GetLifecycleConfiguration"
     ]
     resources = [
       "arn:aws:s3:::tech-floripa-certificates-dev-tf-state",
       "arn:aws:s3:::tech-floripa-certificates-dev-tf-state/*",
       "arn:aws:s3:::tech-floripa-plan-artifacts",
-      "arn:aws:s3:::tech-floripa-plan-artifacts/*"
+      "arn:aws:s3:::tech-floripa-plan-artifacts/*",
+      "arn:aws:s3:::tech-floripa-certificates-dev-bucket",
+      "arn:aws:s3:::tech-floripa-certificates-dev-bucket/*"
     ]
   }
 
-  # ECR
+  # ECR (split for least privilege)
   statement {
     effect = "Allow"
     actions = [
       "ecr:CreateRepository",
       "ecr:DeleteRepository",
-      "ecr:DescribeRepositories",
-      "ecr:ListTagsForResource",
-      "ecr:TagResource",
-      "ecr:UntagResource",
       "ecr:PutLifecyclePolicy",
       "ecr:GetLifecyclePolicy",
       "ecr:DeleteLifecyclePolicy",
+      "ecr:ListTagsForResource",
+      "ecr:TagResource",
+      "ecr:UntagResource",
       "ecr:PutImageScanningConfiguration",
       "ecr:PutImageTagMutability"
     ]
     resources = [
-      "arn:aws:ecr:${var.aws_region}:${var.aws_account_id}:repository/tech-floripa-certificates-*"
+      "arn:aws:ecr:${var.aws_region}:${var.aws_account_id}:repository/tech-floripa-certificates-api-dev",
+      "arn:aws:ecr:${var.aws_region}:${var.aws_account_id}:repository/tech-floripa-certificates-builder-dev",
+      "arn:aws:ecr:${var.aws_region}:${var.aws_account_id}:repository/tech-floripa-certificates-notification-dev"
     ]
+  }
+  statement {
+    effect    = "Allow"
+    actions   = ["ecr:DescribeRepositories"]
+    resources = ["*"]
+  }
+
+  # SQS
+  statement {
+    effect = "Allow"
+    actions = [
+      "sqs:CreateQueue",
+      "sqs:DeleteQueue",
+      "sqs:GetQueueAttributes",
+      "sqs:GetQueueUrl",
+      "sqs:SetQueueAttributes",
+      "sqs:TagQueue",
+      "sqs:UntagQueue",
+      "sqs:ListQueueTags"
+    ]
+    resources = [
+      "arn:aws:sqs:${var.aws_region}:${var.aws_account_id}:tech-floripa-certificates-dev-builder-queue",
+      "arn:aws:sqs:${var.aws_region}:${var.aws_account_id}:tech-floripa-certificates-dev-builder-dlq",
+      "arn:aws:sqs:${var.aws_region}:${var.aws_account_id}:tech-floripa-certificates-dev-notification-queue",
+      "arn:aws:sqs:${var.aws_region}:${var.aws_account_id}:tech-floripa-certificates-dev-notification-dlq"
+    ]
+  }
+  statement {
+    effect    = "Allow"
+    actions   = ["sqs:ListQueues"]
+    resources = ["*"]
   }
 
   # DynamoDB
@@ -116,17 +149,90 @@ data "aws_iam_policy_document" "github_action_permissions" {
       "dynamodb:CreateTable",
       "dynamodb:DeleteTable",
       "dynamodb:DescribeTable",
+      "dynamodb:DescribeContinuousBackups",
+      "dynamodb:DescribeTimeToLive",
+      "dynamodb:ListTagsOfResource",
       "dynamodb:UpdateTable",
-      "dynamodb:ListTables",
       "dynamodb:TagResource",
-      "dynamodb:UntagResource"
+      "dynamodb:UntagResource",
+      "dynamodb:DescribeTable"
     ]
     resources = [
-      "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/tech-floripa-certificates-*-dev",
-      "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/tech-floripa-orders-*-dev",
-      "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/tech-floripa-participants-*-dev",
-      "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/tech-floripa-products-*-dev"
+      "arn:aws:dynamodb:*:*:table/*",
+
     ]
+  }
+  statement {
+    effect    = "Allow"
+    actions   = ["dynamodb:ListTables"]
+    resources = ["*"]
+  }
+
+  # Lambda
+  statement {
+    effect = "Allow"
+    actions = [
+      "lambda:CreateFunction",
+      "lambda:DeleteFunction",
+      "lambda:GetFunction",
+      "lambda:UpdateFunctionCode",
+      "lambda:UpdateFunctionConfiguration",
+      "lambda:TagResource",
+      "lambda:UntagResource",
+      "lambda:CreateEventSourceMapping",
+      "lambda:DeleteEventSourceMapping",
+      "lambda:GetEventSourceMapping",
+      "lambda:UpdateEventSourceMapping",
+      "lambda:AddPermission",
+      "lambda:RemovePermission",
+      "lambda:GetPolicy"
+    ]
+    resources = [
+      "arn:aws:lambda:${var.aws_region}:${var.aws_account_id}:function:${var.project_name}-api-${var.environment}",
+      "arn:aws:lambda:${var.aws_region}:${var.aws_account_id}:function:${var.project_name}-builder-${var.environment}",
+      "arn:aws:lambda:${var.aws_region}:${var.aws_account_id}:function:${var.project_name}-notification-${var.environment}"
+    ]
+  }
+  statement {
+    effect    = "Allow"
+    actions   = ["lambda:ListTags", "lambda:ListEventSourceMappings"]
+    resources = ["*"]
+  }
+
+  # API Gateway
+  statement {
+    effect = "Allow"
+    actions = [
+      "apigateway:POST",
+      "apigateway:PUT",
+      "apigateway:GET",
+      "apigateway:DELETE",
+      "apigateway:PATCH"
+    ]
+    resources = [
+      "arn:aws:apigateway:${var.aws_region}::/restapis/*"
+    ]
+  }
+
+  # CloudWatch Logs
+  statement {
+    effect = "Allow"
+    actions = [
+      "logs:CreateLogGroup",
+      "logs:DeleteLogGroup",
+      "logs:TagResource",
+      "logs:UntagResource"
+    ]
+    resources = [
+      "arn:aws:logs:${var.aws_region}:${var.aws_account_id}:log-group:/aws/lambda/${var.project_name}-api-${var.environment}",
+      "arn:aws:logs:${var.aws_region}:${var.aws_account_id}:log-group:/aws/lambda/${var.project_name}-builder-${var.environment}",
+      "arn:aws:logs:${var.aws_region}:${var.aws_account_id}:log-group:/aws/lambda/${var.project_name}-notification-${var.environment}"
+    ]
+  }
+  statement {
+    effect    = "Allow"
+    actions   = ["logs:DescribeLogGroups"]
+    resources = ["*"]
   }
 }
 

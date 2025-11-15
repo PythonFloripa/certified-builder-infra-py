@@ -70,21 +70,21 @@ resource "aws_s3_bucket_policy" "tech_floripa_certificates_dev_tf_state_policy" 
           "${aws_s3_bucket.tech_floripa_certificates_dev_tf_state.arn}/*"
         ]
       },
-    #   {
-    #     Sid       = "DenyAllOthers"
-    #     Effect    = "Deny"
-    #     Principal = "*"
-    #     Action    = "s3:*"
-    #     Resource = [
-    #       aws_s3_bucket.tech_floripa_certificates_dev_tf_state.arn,
-    #       "${aws_s3_bucket.tech_floripa_certificates_dev_tf_state.arn}/*"
-    #     ]
-    #     Condition = {
-    #       StringNotEquals = {
-    #         "aws:PrincipalArn" = "arn:aws:iam::${var.aws_account_id}:role/github-actions-assume-role"
-    #       }
-    #     }
-    #   }
+      #   {
+      #     Sid       = "DenyAllOthers"
+      #     Effect    = "Deny"
+      #     Principal = "*"
+      #     Action    = "s3:*"
+      #     Resource = [
+      #       aws_s3_bucket.tech_floripa_certificates_dev_tf_state.arn,
+      #       "${aws_s3_bucket.tech_floripa_certificates_dev_tf_state.arn}/*"
+      #     ]
+      #     Condition = {
+      #       StringNotEquals = {
+      #         "aws:PrincipalArn" = "arn:aws:iam::${var.aws_account_id}:role/github-actions-assume-role"
+      #       }
+      #     }
+      #   }
     ]
   })
 }
@@ -106,21 +106,21 @@ resource "aws_s3_bucket_policy" "tech_floripa_plan_artifacts_policy" {
           "${aws_s3_bucket.tech_floripa_plan_artifacts.arn}/*"
         ]
       },
-    #   {
-    #     Sid       = "DenyAllOthers"
-    #     Effect    = "Deny"
-    #     Principal = "*"
-    #     Action    = "s3:*"
-    #     Resource = [
-    #       aws_s3_bucket.tech_floripa_plan_artifacts.arn,
-    #       "${aws_s3_bucket.tech_floripa_plan_artifacts.arn}/*"
-    #     ]
-    #     Condition = {
-    #       StringNotEquals = {
-    #         "aws:PrincipalArn" = "arn:aws:iam::${var.aws_account_id}:role/github-actions-assume-role"
-    #       }
-    #     }
-    #   }
+      #   {
+      #     Sid       = "DenyAllOthers"
+      #     Effect    = "Deny"
+      #     Principal = "*"
+      #     Action    = "s3:*"
+      #     Resource = [
+      #       aws_s3_bucket.tech_floripa_plan_artifacts.arn,
+      #       "${aws_s3_bucket.tech_floripa_plan_artifacts.arn}/*"
+      #     ]
+      #     Condition = {
+      #       StringNotEquals = {
+      #         "aws:PrincipalArn" = "arn:aws:iam::${var.aws_account_id}:role/github-actions-assume-role"
+      #       }
+      #     }
+      #   }
     ]
   })
 }
