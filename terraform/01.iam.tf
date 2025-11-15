@@ -106,6 +106,26 @@ data "aws_iam_policy_document" "github_action_permissions" {
       "arn:aws:ecr:${var.aws_region}:${var.aws_account_id}:repository/tech-floripa-certificates-*"
     ]
   }
+
+  # DynamoDB
+  statement {
+    effect = "Allow"
+    actions = [
+      "dynamodb:CreateTable",
+      "dynamodb:DeleteTable",
+      "dynamodb:DescribeTable",
+      "dynamodb:UpdateTable",
+      "dynamodb:ListTables",
+      "dynamodb:TagResource",
+      "dynamodb:UntagResource"
+    ]
+    resources = [
+      "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/tech-floripa-certificates-*-dev",
+      "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/tech-floripa-orders-*-dev",
+      "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/tech-floripa-participants-*-dev",
+      "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/tech-floripa-products-*-dev"
+    ]
+  }
 }
 
 resource "aws_iam_policy" "github_actions_policy" {
