@@ -77,7 +77,9 @@ data "aws_iam_policy_document" "github_action_permissions" {
       "s3:GetObject",
       "s3:PutObject",
       "s3:DeleteObject",
-      "s3:GetLifecycleConfiguration"
+      "s3:GetLifecycleConfiguration",
+      "s3:PutLifecycleConfiguration"
+
     ]
     resources = [
       "arn:aws:s3:::tech-floripa-certificates-dev-tf-state",

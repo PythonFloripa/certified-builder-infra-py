@@ -1,3 +1,12 @@
+# ECR
+module "ecr" {
+  source                       = "../../modules/01.ecr"
+  api_repository_name          = "${var.project_name}-api-${var.environment}"
+  builder_repository_name      = "${var.project_name}-builder-${var.environment}"
+  notification_repository_name = "${var.project_name}-notification-${var.environment}"
+  project_name                 = var.project_name
+}
+
 # DynamoDB Tables
 module "certificates_table" {
   source       = "../../modules/02.dynamodb/certificates"
@@ -27,22 +36,6 @@ module "products_table" {
   project_name = var.project_name
 }
 
-# SQS
-module "sqs" {
-  source       = "../../modules/04.sqs"
-  project_name = var.project_name
-  environment  = var.environment
-}
-
-# ECR
-module "ecr" {
-  source                       = "../../modules/01.ecr"
-  api_repository_name          = "${var.project_name}-api-${var.environment}"
-  builder_repository_name      = "${var.project_name}-builder-${var.environment}"
-  notification_repository_name = "${var.project_name}-notification-${var.environment}"
-  project_name                 = var.project_name
-}
-
 # S3
 module "s3" {
   source       = "../../modules/03.bucket_s3"
@@ -58,6 +51,13 @@ module "s3" {
       status     = "Enabled"
     }
   ]
+}
+
+# SQS
+module "sqs" {
+  source       = "../../modules/04.sqs"
+  project_name = var.project_name
+  environment  = var.environment
 }
 
 # # Lambda
