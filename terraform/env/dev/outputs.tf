@@ -45,21 +45,21 @@ output "products_table_arn" {
 }
 
 
-# # Informações do SQS
-# output "sqs_queue_url" {
-#   description = "URL da fila SQS principal"
-#   value       = module.sqs.queue_url
-# }
+# Informações do SQS
+output "sqs_queue_url" {
+  description = "URL da fila SQS principal"
+  value       = module.sqs.queue_url
+}
 
-# output "sqs_queue_arn" {
-#   description = "ARN da fila SQS principal"
-#   value       = module.sqs.queue_arn
-# }
+output "sqs_queue_arn" {
+  description = "ARN da fila SQS principal"
+  value       = module.sqs.queue_arn
+}
 
-# output "sqs_dlq_url" {
-#   description = "URL da Dead Letter Queue (builder)"
-#   value       = module.sqs.builder_dlq_url
-# }
+output "sqs_dlq_url" {
+  description = "URL da Dead Letter Queue (builder)"
+  value       = module.sqs.builder_dlq_url
+}
 
 # Informações do ECR
 output "ecr_repository_url" {
