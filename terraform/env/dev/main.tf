@@ -10,3 +10,5 @@ module "ecr" {
   builder_repository_name      = "${var.project_name}-builder-${var.environment}"
   notification_repository_name = "${var.project_name}-notification-${var.environment}"
 }
+
+
