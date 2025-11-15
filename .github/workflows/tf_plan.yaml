@@ -55,7 +55,6 @@ jobs:
 
   plan:
     needs: detect
-    if: needs.detect.outputs.matrix != '{"include":[]}'
     strategy:
       matrix: ${{ fromJson(needs.detect.outputs.matrix) }}
     runs-on: ubuntu-latest
