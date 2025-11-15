@@ -31,3 +31,47 @@ output "ecr_notification_repository_arn" {
   description = "ARN of the Notification ECR repository"
   value       = module.ecr.notification_repository_arn
 }
+
+# ============================================================================
+# DynamoDB Outputs
+# ============================================================================
+
+output "dynamodb_certificates_table_name" {
+  description = "Nome da tabela de certificados"
+  value       = module.dynamodb_certificates.table_name
+}
+
+output "dynamodb_certificates_table_arn" {
+  description = "ARN da tabela de certificados"
+  value       = module.dynamodb_certificates.table_arn
+}
+
+output "dynamodb_orders_table_name" {
+  description = "Nome da tabela de pedidos"
+  value       = module.dynamodb_orders.table_name
+}
+
+output "dynamodb_orders_table_arn" {
+  description = "ARN da tabela de pedidos"
+  value       = module.dynamodb_orders.table_arn
+}
+
+output "dynamodb_participants_table_name" {
+  description = "Nome da tabela de participantes"
+  value       = module.dynamodb_participants.table_name
+}
+
+output "dynamodb_participants_table_arn" {
+  description = "ARN da tabela de participantes"
+  value       = module.dynamodb_participants.table_arn
+}
+
+output "dynamodb_products_table_name" {
+  description = "Nome da tabela de produtos"
+  value       = module.dynamodb_products.table_name
+}
+
+output "dynamodb_products_table_arn" {
+  description = "ARN da tabela de produtos"
+  value       = module.dynamodb_products.table_arn
+}
