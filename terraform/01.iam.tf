@@ -132,10 +132,7 @@ data "aws_iam_policy_document" "github_action_permissions" {
       "sqs:ListQueueTags"
     ]
     resources = [
-      "arn:aws:sqs:${var.aws_region}:${var.aws_account_id}:tech-floripa-certificates-dev-builder-queue",
-      "arn:aws:sqs:${var.aws_region}:${var.aws_account_id}:tech-floripa-certificates-dev-builder-dlq",
-      "arn:aws:sqs:${var.aws_region}:${var.aws_account_id}:tech-floripa-certificates-dev-notification-queue",
-      "arn:aws:sqs:${var.aws_region}:${var.aws_account_id}:tech-floripa-certificates-dev-notification-dlq"
+      "arn:aws:sqs:${var.aws_region}:${var.aws_account_id}:*",
     ]
   }
   statement {
