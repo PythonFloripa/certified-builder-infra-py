@@ -23,17 +23,17 @@ output "role_arn" {
 # Outputs da função Lambda Builder
 output "builder_function_name" {
   description = "Nome da função Lambda Builder"
-  value       = aws_lambda_function.builder_funcition.function_name
+  value       = aws_lambda_function.builder_function.function_name
 }
 
 output "builder_function_arn" {
   description = "ARN da função Lambda Builder"
-  value       = aws_lambda_function.builder_funcition.arn
+  value       = aws_lambda_function.builder_function.arn
 }
 
 output "builder_invoke_arn" {
   description = "ARN para invocar a função Lambda Builder"
-  value       = aws_lambda_function.builder_funcition.invoke_arn
+  value       = aws_lambda_function.builder_function.invoke_arn
 }
 
 output "builder_role_arn" {
