@@ -53,12 +53,12 @@ module "s3" {
   ]
 }
 
-# SQS
-module "sqs" {
-  source       = "../../modules/04.sqs"
-  project_name = var.project_name
-  environment  = var.environment
-}
+# # SQS
+# module "sqs" {
+#   source       = "../../modules/04.sqs"
+#   project_name = var.project_name
+#   environment  = var.environment
+# }
 
 # # Lambda
 # module "lambda" {
