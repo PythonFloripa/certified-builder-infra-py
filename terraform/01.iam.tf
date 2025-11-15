@@ -47,7 +47,9 @@ data "aws_iam_policy_document" "github_action_permissions" {
       "iam:ListPolicyVersions",
       "iam:ListOpenIDConnectProviders",
       "iam:ListRolePolicies",
-      "iam:ListAttachedRolePolicies"
+      "iam:ListAttachedRolePolicies",
+      "iam:DeletePolicyVersion"
+
     ]
     resources = ["*"]
   }
