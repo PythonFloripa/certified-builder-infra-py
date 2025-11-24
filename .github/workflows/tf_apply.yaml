@@ -41,19 +41,24 @@ jobs:
         if: steps.get_pr.outputs.pr_number
         id: set-matrix
         run: |
+          set -x  # Enable shell tracing for debug
           PR_NUMBER=${{ steps.get_pr.outputs.pr_number }}
 
           FILES=$(gh pr view $PR_NUMBER --json files --jq '.files[].path')
+          echo "Changed files from PR $PR_NUMBER:"
+          echo "$FILES"
 
           MATRIX="[]"
 
           # Check for dev environment changes (terraform/env/dev/)
           if echo "$FILES" | grep -q "^terraform/env/dev/"; then
+            echo "Detected changes in terraform/env/dev/"
             MATRIX=$(echo "$MATRIX" | jq -c '. + [{"dir":"terraform/env/dev","env":"dev","pr":"'$PR_NUMBER'"}]')
           fi
 
           # Check for shared infrastructure changes (top-level terraform/, excluding terraform/env/)
           if echo "$FILES" | grep "^terraform/" | grep -v "^terraform/env/" | grep -q .; then
+            echo "Detected changes in shared terraform/ (excluding env/)"
             MATRIX=$(echo "$MATRIX" | jq -c '. + [{"dir":"terraform","env":"shared","pr":"'$PR_NUMBER'"}]')
           fi
 
@@ -85,7 +90,9 @@ jobs:
       - name: Parse environments
         id: parse
         run: |
+          set -x  # Enable shell tracing for debug
           MATRIX='${{ needs.detect.outputs.matrix }}'
+          echo "Parsed matrix: $MATRIX"
 
           # Check if shared exists in matrix
           SHARED=$(echo "$MATRIX" | jq -c '.include[] | select(.env == "shared")')
@@ -93,6 +100,7 @@ jobs:
             echo "has_shared=true" >> $GITHUB_OUTPUT
             echo "shared_dir=$(echo "$SHARED" | jq -r '.dir')" >> $GITHUB_OUTPUT
             echo "shared_pr=$(echo "$SHARED" | jq -r '.pr')" >> $GITHUB_OUTPUT
+            echo "Shared entry: $SHARED"
           else
             echo "has_shared=false" >> $GITHUB_OUTPUT
           fi
@@ -103,6 +111,7 @@ jobs:
             echo "has_dev=true" >> $GITHUB_OUTPUT
             echo "dev_dir=$(echo "$DEV" | jq -r '.dir')" >> $GITHUB_OUTPUT
             echo "dev_pr=$(echo "$DEV" | jq -r '.pr')" >> $GITHUB_OUTPUT
+            echo "Dev entry: $DEV"
           else
             echo "has_dev=false" >> $GITHUB_OUTPUT
           fi
@@ -110,7 +119,9 @@ jobs:
       - name: Apply Shared Infrastructure
         if: steps.parse.outputs.has_shared == 'true'
         run: |
-          set -euo pipefail
+          set -euxo pipefail
+          echo "Dumping environment variables for debug:"
+          env | sort
 
           echo "========================================="
           echo "Applying Terraform for: shared"
@@ -126,6 +137,11 @@ jobs:
 
           terraform show -no-color tfplan > plan-old.txt
           terraform show -no-color tfplan-new > plan-new.txt
+
+          echo "--- plan-old.txt ---"
+          head -40 plan-old.txt || true
+          echo "--- plan-new.txt ---"
+          head -40 plan-new.txt || true
 
           if ! diff -q plan-old.txt plan-new.txt > /dev/null; then
             echo "ERROR: Plans differ for shared - state has changed since PR"
@@ -144,7 +160,9 @@ jobs:
       - name: Apply Dev Environment
         if: steps.parse.outputs.has_dev == 'true'
         run: |
-          set -euo pipefail
+          set -euxo pipefail
+          echo "Dumping environment variables for debug:"
+          env | sort
 
           echo "========================================="
           echo "Applying Terraform for: dev"
@@ -160,6 +178,11 @@ jobs:
 
           terraform show -no-color tfplan > plan-old.txt
           terraform show -no-color tfplan-new > plan-new.txt
+
+          echo "--- plan-old.txt ---"
+          head -40 plan-old.txt || true
+          echo "--- plan-new.txt ---"
+          head -40 plan-new.txt || true
 
           if ! diff -q plan-old.txt plan-new.txt > /dev/null; then
             echo "ERROR: Plans differ for dev - state has changed since PR"
