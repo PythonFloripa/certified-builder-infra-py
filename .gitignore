@@ -11,14 +11,12 @@ wheels/
 .env
 
 # Terraform
-terraform/.terraform.lock.hcl
 terraform/.terraform/*
 terraform/*.tfstate
 terraform/*.tfstate.backup
 terraform/*.tfvars
 
 terraform/**/*.tfvars
-terraform/**/.terraform.lock.hcl
 terraform/**/.terraform/*
 
 .vscode
