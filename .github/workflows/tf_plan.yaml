@@ -1,4 +1,4 @@
-name: Terraform from PR
+name: Terraform Plan from PR
 
 on:
   pull_request:
