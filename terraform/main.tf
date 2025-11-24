@@ -48,7 +48,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "tech_floripa_plan_artifacts_li
     filter {}
 
     expiration {
-      days = 1
+      days = 3
     }
   }
 }
