@@ -3,7 +3,6 @@ name: Terraform Apply from PR
 on:
   push:
     branches: [main]
-
 env:
   TF_VAR_aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
   TF_VAR_aws_region: ${{ secrets.AWS_REGION }}
@@ -39,42 +38,26 @@ jobs:
 
       - name: Detect changed Terraform directories from PR
         if: steps.get_pr.outputs.pr_number
-        id: set-matrix
+        id: detect_changes
         run: |
-          set -x  # Enable shell tracing for debug
           PR_NUMBER=${{ steps.get_pr.outputs.pr_number }}
 
           FILES=$(gh pr view $PR_NUMBER --json files --jq '.files[].path')
           echo "Changed files from PR $PR_NUMBER:"
           echo "$FILES"
 
-          MATRIX="[]"
-
           # Check for dev environment changes (terraform/env/dev/)
           if echo "$FILES" | grep -q "^terraform/env/dev/"; then
-            echo "Detected changes in terraform/env/dev/"
-            MATRIX=$(echo "$MATRIX" | jq -c '. + [{"dir":"terraform/env/dev","env":"dev","pr":"'$PR_NUMBER'"}]')
+            echo "has_dev=true" >> $GITHUB_OUTPUT
           fi
 
           # Check for shared infrastructure changes (top-level terraform/, excluding terraform/env/)
           if echo "$FILES" | grep "^terraform/" | grep -v "^terraform/env/" | grep -q .; then
-            echo "Detected changes in shared terraform/ (excluding env/)"
-            MATRIX=$(echo "$MATRIX" | jq -c '. + [{"dir":"terraform","env":"shared","pr":"'$PR_NUMBER'"}]')
-          fi
-
-          echo "matrix={\"include\":$MATRIX}" >> $GITHUB_OUTPUT
-          echo "Matrix: {\"include\":$MATRIX}"
-
-          # Set has_changes flag based on matrix length
-          if [ "$(echo "$MATRIX" | jq 'length')" -gt 0 ]; then
-            echo "has_changes=true" >> $GITHUB_OUTPUT
-          else
-            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "has_shared=true" >> $GITHUB_OUTPUT
           fi
 
   apply:
-    needs: detect
-    if: needs.detect.outputs.has_changes == 'true'
+    needs: detect_changes
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -87,113 +70,16 @@ jobs:
           aws-region: ${{ env.TF_VAR_aws_region }}
           role-session-name: TerraformApplySession
 
-      - name: Parse environments
-        id: parse
-        run: |
-          set -x  # Enable shell tracing for debug
-          MATRIX='${{ needs.detect.outputs.matrix }}'
-          echo "Parsed matrix: $MATRIX"
-
-          # Check if shared exists in matrix
-          SHARED=$(echo "$MATRIX" | jq -c '.include[] | select(.env == "shared")')
-          if [ -n "$SHARED" ]; then
-            echo "has_shared=true" >> $GITHUB_OUTPUT
-            echo "shared_dir=$(echo "$SHARED" | jq -r '.dir')" >> $GITHUB_OUTPUT
-            echo "shared_pr=$(echo "$SHARED" | jq -r '.pr')" >> $GITHUB_OUTPUT
-            echo "Shared entry: $SHARED"
-          else
-            echo "has_shared=false" >> $GITHUB_OUTPUT
-          fi
-
-          # Check if dev exists in matrix
-          DEV=$(echo "$MATRIX" | jq -c '.include[] | select(.env == "dev")')
-          if [ -n "$DEV" ]; then
-            echo "has_dev=true" >> $GITHUB_OUTPUT
-            echo "dev_dir=$(echo "$DEV" | jq -r '.dir')" >> $GITHUB_OUTPUT
-            echo "dev_pr=$(echo "$DEV" | jq -r '.pr')" >> $GITHUB_OUTPUT
-            echo "Dev entry: $DEV"
-          else
-            echo "has_dev=false" >> $GITHUB_OUTPUT
-          fi
-
       - name: Apply Shared Infrastructure
-        if: steps.parse.outputs.has_shared == 'true'
-        run: |
-          set -euxo pipefail
-          echo "Dumping environment variables for debug:"
-          env | sort
-
-          echo "========================================="
-          echo "Applying Terraform for: shared"
-          echo "========================================="
-
-          cd ${{ steps.parse.outputs.shared_dir }}
-
-          terraform init -input=false -upgrade=false
-
-          aws s3 cp s3://${{ env.TFPLAN_S3_BUCKET }}/shared/${{ steps.parse.outputs.shared_pr }}/tfplan tfplan
-
-          terraform plan -input=false -out=tfplan-new
-
-          terraform show -no-color tfplan > plan-old.txt
-          terraform show -no-color tfplan-new > plan-new.txt
-
-          echo "--- plan-old.txt ---"
-          head -40 plan-old.txt || true
-          echo "--- plan-new.txt ---"
-          head -40 plan-new.txt || true
-
-          if ! diff -q plan-old.txt plan-new.txt > /dev/null; then
-            echo "ERROR: Plans differ for shared - state has changed since PR"
-            diff plan-old.txt plan-new.txt || true
-            exit 1
-          fi
-
-          if grep -q "No changes" plan-old.txt; then
-            echo "No changes detected in plan for shared, skipping apply"
-          else
-            echo "Applying changes for shared..."
-            terraform apply -input=false tfplan
-            echo "✅ Apply completed for shared"
-          fi
+        if: steps.detect_changes.outputs.has_shared == 'true'
+        uses: ./.github/actions/tf_apply
+        with:
+          working-directory: "terraform"
+          env: shared
 
       - name: Apply Dev Environment
-        if: steps.parse.outputs.has_dev == 'true'
-        run: |
-          set -euxo pipefail
-          echo "Dumping environment variables for debug:"
-          env | sort
-
-          echo "========================================="
-          echo "Applying Terraform for: dev"
-          echo "========================================="
-
-          cd ${{ steps.parse.outputs.dev_dir }}
-
-          terraform init -input=false -upgrade=false
-
-          aws s3 cp s3://${{ env.TFPLAN_S3_BUCKET }}/dev/${{ steps.parse.outputs.dev_pr }}/tfplan tfplan
-
-          terraform plan -input=false -out=tfplan-new
-
-          terraform show -no-color tfplan > plan-old.txt
-          terraform show -no-color tfplan-new > plan-new.txt
-
-          echo "--- plan-old.txt ---"
-          head -40 plan-old.txt || true
-          echo "--- plan-new.txt ---"
-          head -40 plan-new.txt || true
-
-          if ! diff -q plan-old.txt plan-new.txt > /dev/null; then
-            echo "ERROR: Plans differ for dev - state has changed since PR"
-            diff plan-old.txt plan-new.txt || true
-            exit 1
-          fi
-
-          if grep -q "No changes" plan-old.txt; then
-            echo "No changes detected in plan for dev, skipping apply"
-          else
-            echo "Applying changes for dev..."
-            terraform apply -input=false tfplan
-            echo "✅ Apply completed for dev"
-          fi
+        if: steps.detect_changes.outputs.has_dev == 'true'
+        uses: ./.github/actions/tf_apply
+        with:
+          working-directory: "terraform/env/dev"
+          env: dev

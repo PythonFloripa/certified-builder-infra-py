@@ -1,0 +1,27 @@
+name: 'Terraform Apply'
+inputs:
+  working-directory:
+    description: 'Directory to run Terraform commands in.'
+    required: true
+  env:
+    description: 'Environment name for logging.'
+    required: true
+runs:
+  using: 'composite'
+  steps:
+    - name: Terraform Init
+      run: terraform init -input=false -upgrade=false
+      working-directory: ${{ inputs.working-directory }}
+
+    - name: Terraform Plan
+      run: terraform plan -input=false -out=tfplan
+      working-directory: ${{ inputs.working-directory }}
+
+    - name: Terraform Apply
+      run: |
+        set -euo pipefail
+        echo "[INFO] Applying changes for ${{ inputs.env }}..."
+        terraform apply -input=false tfplan
+        echo "✅ Apply completed for ${{ inputs.env }}"
+      working-directory: ${{ inputs.working-directory }}
+      shell: bash

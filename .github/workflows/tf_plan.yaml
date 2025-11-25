@@ -56,10 +56,12 @@ jobs:
           set -euo pipefail
           terraform plan -input=false -out=tfplan
           terraform show -no-color tfplan > plan-output.txt
-          echo "## Terraform Plan (${{ matrix.env }})" > plan-comment.md
-          echo '```hcl' >> plan-comment.md
-          cat plan-output.txt >> plan-comment.md
-          echo '```' >> plan-comment.md
+          {
+            echo "## Terraform Plan (${{ matrix.env }})"
+            echo '```hcl'
+            cat plan-output.txt
+            echo '```'
+          } > plan-comment.md
         working-directory: ${{ matrix.dir }}
 
       - name: Comment PR
@@ -69,9 +71,3 @@ jobs:
           header: terraform-plan-${{ matrix.env }}
           recreate: true
           path: ${{ matrix.dir }}/plan-comment.md
-
-      - name: Upload Plan to S3
-        if: github.event.pull_request.number
-        run: |
-          aws s3 cp ${{ matrix.dir }}/tfplan \
-            s3://${{ env.TFPLAN_S3_BUCKET }}/${{ matrix.env }}/${{ github.event.pull_request.number }}/tfplan

@@ -4,7 +4,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = ">= 6.21.0, < 7.0.0"
+      version = "6.22.1"
     }
   }
   backend "s3" {
@@ -34,25 +34,6 @@ resource "aws_s3_bucket" "tech_floripa_certificates_dev_tf_state" {
   }
 }
 
-resource "aws_s3_bucket" "tech_floripa_plan_artifacts" {
-  bucket = "tech-floripa-plan-artifacts"
-}
-
-resource "aws_s3_bucket_lifecycle_configuration" "tech_floripa_plan_artifacts_lifecycle" {
-  bucket = aws_s3_bucket.tech_floripa_plan_artifacts.id
-
-  rule {
-    id     = "delete-old-objects"
-    status = "Enabled"
-
-    filter {}
-
-    expiration {
-      days = 2
-    }
-  }
-}
-
 resource "aws_s3_bucket_policy" "tech_floripa_certificates_dev_tf_state_policy" {
   bucket = aws_s3_bucket.tech_floripa_certificates_dev_tf_state.id
   policy = jsonencode({
@@ -69,59 +50,9 @@ resource "aws_s3_bucket_policy" "tech_floripa_certificates_dev_tf_state_policy" 
           aws_s3_bucket.tech_floripa_certificates_dev_tf_state.arn,
           "${aws_s3_bucket.tech_floripa_certificates_dev_tf_state.arn}/*"
         ]
-      },
-      #   {
-      #     Sid       = "DenyAllOthers"
-      #     Effect    = "Deny"
-      #     Principal = "*"
-      #     Action    = "s3:*"
-      #     Resource = [
-      #       aws_s3_bucket.tech_floripa_certificates_dev_tf_state.arn,
-      #       "${aws_s3_bucket.tech_floripa_certificates_dev_tf_state.arn}/*"
-      #     ]
-      #     Condition = {
-      #       StringNotEquals = {
-      #         "aws:PrincipalArn" = "arn:aws:iam::${var.aws_account_id}:role/github-actions-assume-role"
-      #       }
-      #     }
-      #   }
+      }
     ]
   })
 }
 
-resource "aws_s3_bucket_policy" "tech_floripa_plan_artifacts_policy" {
-  bucket = aws_s3_bucket.tech_floripa_plan_artifacts.id
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Sid    = "AllowGitHubActionsRole"
-        Effect = "Allow"
-        Principal = {
-          AWS = "arn:aws:iam::${var.aws_account_id}:role/github-actions-assume-role"
-        }
-        Action = "s3:*"
-        Resource = [
-          aws_s3_bucket.tech_floripa_plan_artifacts.arn,
-          "${aws_s3_bucket.tech_floripa_plan_artifacts.arn}/*"
-        ]
-      },
-      #   {
-      #     Sid       = "DenyAllOthers"
-      #     Effect    = "Deny"
-      #     Principal = "*"
-      #     Action    = "s3:*"
-      #     Resource = [
-      #       aws_s3_bucket.tech_floripa_plan_artifacts.arn,
-      #       "${aws_s3_bucket.tech_floripa_plan_artifacts.arn}/*"
-      #     ]
-      #     Condition = {
-      #       StringNotEquals = {
-      #         "aws:PrincipalArn" = "arn:aws:iam::${var.aws_account_id}:role/github-actions-assume-role"
-      #       }
-      #     }
-      #   }
-    ]
-  })
-}
 
