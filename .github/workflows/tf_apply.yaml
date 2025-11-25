@@ -20,12 +20,20 @@ permissions:
   id-token: write
 
 jobs:
-  detect:
+  apply:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
+
+      - uses: hashicorp/setup-terraform@v3
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.TF_VAR_github_actions_role_arn }}
+          aws-region: ${{ env.TF_VAR_aws_region }}
+          role-session-name: TerraformApplySession
 
       - name: Get PR Number
         id: get_pr
@@ -34,6 +42,7 @@ jobs:
           echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
 
       - name: Detect changed Terraform directories from PR
+        id: detect
         if: steps.get_pr.outputs.pr_number
         run: |
           PR_NUMBER=${{ steps.get_pr.outputs.pr_number }}
@@ -52,20 +61,6 @@ jobs:
             echo "has_shared=true" >> $GITHUB_OUTPUT
           fi
 
-  apply:
-    needs: detect
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-
-      - uses: hashicorp/setup-terraform@v3
-
-      - uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ env.TF_VAR_github_actions_role_arn }}
-          aws-region: ${{ env.TF_VAR_aws_region }}
-          role-session-name: TerraformApplySession
-
       - name: Apply Shared Infrastructure
         if: steps.detect.outputs.has_shared == 'true'
         uses: ./.github/actions/tf_apply
@@ -79,3 +74,5 @@ jobs:
         with:
           working-directory: "terraform/env/dev"
           env: dev
+
+
