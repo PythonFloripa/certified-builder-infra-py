@@ -36,22 +36,22 @@ module "products_table" {
   project_name = var.project_name
 }
 
-# S3
-module "s3" {
-  source       = "../../modules/03.bucket_s3"
-  bucket_name  = "${var.project_name}-${var.environment}-bucket"
-  environment  = var.environment
-  project_name = var.project_name
-  region       = var.aws_region
-  lifecycle_rule = [
-    {
-      id         = "lifecycle-rule"
-      prefix     = "certificates/"
-      expiration = 90
-      status     = "Enabled"
-    }
-  ]
-}
+# # S3
+# module "s3" {
+#   source       = "../../modules/03.bucket_s3"
+#   bucket_name  = "${var.project_name}-${var.environment}-bucket"
+#   environment  = var.environment
+#   project_name = var.project_name
+#   region       = var.aws_region
+#   lifecycle_rule = [
+#     {
+#       id         = "lifecycle-rule"
+#       prefix     = "certificates/"
+#       expiration = 90
+#       status     = "Enabled"
+#     }
+#   ]
+# }
 
 # SQS
 # module "sqs" {

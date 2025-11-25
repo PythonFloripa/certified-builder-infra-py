@@ -74,15 +74,15 @@ output "ecr_api_repository_name" {
 
 #informações do s3
 
-output "s3_bucket_name" {
-  description = "Nome do bucket S3"
-  value       = module.s3.bucket_name
-}
+# output "s3_bucket_name" {
+#   description = "Nome do bucket S3"
+#   value       = module.s3.bucket_name
+# }
 
-output "s3_bucket_arn" {
-  description = "ARN do bucket S3"
-  value       = module.s3.bucket_arn
-}
+# output "s3_bucket_arn" {
+#   description = "ARN do bucket S3"
+#   value       = module.s3.bucket_arn
+# }
 
 ## Informações do Lambda
 # output "lambda_function_name" {
