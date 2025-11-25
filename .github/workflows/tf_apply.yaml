@@ -22,9 +22,6 @@ permissions:
 jobs:
   detect:
     runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
-      has_changes: ${{ steps.set-matrix.outputs.has_changes }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -38,7 +35,6 @@ jobs:
 
       - name: Detect changed Terraform directories from PR
         if: steps.get_pr.outputs.pr_number
-        id: detect_changes
         run: |
           PR_NUMBER=${{ steps.get_pr.outputs.pr_number }}
 
@@ -57,7 +53,7 @@ jobs:
           fi
 
   apply:
-    needs: detect_changes
+    needs: detect
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -71,14 +67,14 @@ jobs:
           role-session-name: TerraformApplySession
 
       - name: Apply Shared Infrastructure
-        if: steps.detect_changes.outputs.has_shared == 'true'
+        if: steps.detect.outputs.has_shared == 'true'
         uses: ./.github/actions/tf_apply
         with:
           working-directory: "terraform"
           env: shared
 
       - name: Apply Dev Environment
-        if: steps.detect_changes.outputs.has_dev == 'true'
+        if: steps.detect.outputs.has_dev == 'true'
         uses: ./.github/actions/tf_apply
         with:
           working-directory: "terraform/env/dev"
