@@ -71,9 +71,3 @@ jobs:
           header: terraform-plan-${{ matrix.env }}
           recreate: true
           path: ${{ matrix.dir }}/plan-comment.md
-
-      - name: Upload Plan to S3
-        if: github.event.pull_request.number
-        run: |
-          aws s3 cp ${{ matrix.dir }}/tfplan \
-            s3://${{ env.TFPLAN_S3_BUCKET }}/${{ matrix.env }}/${{ github.event.pull_request.number }}/tfplan
