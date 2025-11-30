@@ -7,34 +7,34 @@ module "ecr" {
   project_name                 = var.project_name
 }
 
-# # DynamoDB Tables
-# module "certificates_table" {
-#   source       = "../../modules/02.dynamodb/certificates"
-#   table_name   = "${var.project_name}-certificates-${var.environment}"
-#   environment  = var.environment
-#   project_name = var.project_name
-# }
+# DynamoDB Tables
+module "certificates_table" {
+  source       = "../../modules/02.dynamodb/certificates"
+  table_name   = "${var.project_name}-certificates-${var.environment}"
+  environment  = var.environment
+  project_name = var.project_name
+}
 
-# module "orders_table" {
-#   source       = "../../modules/02.dynamodb/orders"
-#   table_name   = "${var.project_name}-orders-${var.environment}"
-#   environment  = var.environment
-#   project_name = var.project_name
-# }
+module "orders_table" {
+  source       = "../../modules/02.dynamodb/orders"
+  table_name   = "${var.project_name}-orders-${var.environment}"
+  environment  = var.environment
+  project_name = var.project_name
+}
 
-# module "participants_table" {
-#   source       = "../../modules/02.dynamodb/participants"
-#   table_name   = "${var.project_name}-participants-${var.environment}"
-#   environment  = var.environment
-#   project_name = var.project_name
-# }
+module "participants_table" {
+  source       = "../../modules/02.dynamodb/participants"
+  table_name   = "${var.project_name}-participants-${var.environment}"
+  environment  = var.environment
+  project_name = var.project_name
+}
 
-# module "products_table" {
-#   source       = "../../modules/02.dynamodb/products"
-#   table_name   = "${var.project_name}-products-${var.environment}"
-#   environment  = var.environment
-#   project_name = var.project_name
-# }
+module "products_table" {
+  source       = "../../modules/02.dynamodb/products"
+  table_name   = "${var.project_name}-products-${var.environment}"
+  environment  = var.environment
+  project_name = var.project_name
+}
 
 # # S3
 # module "s3" {
