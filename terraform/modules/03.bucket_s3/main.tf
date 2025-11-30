@@ -1,7 +1,7 @@
 # Módulo S3 para Certified Builder API
 # Responsável por criar o bucket S3 para armazenar os arquivos do projeto
 
-resource "aws_s3_bucket" "bucket" {
+resource "aws_s3_bucket" "certificates_bucket" {
   bucket = var.bucket_name
   force_destroy = true # Deleta o bucket mesmo que contenha objetos
   tags = {
@@ -14,9 +14,9 @@ resource "aws_s3_bucket" "bucket" {
 
 # Configuração de ciclo de vida para o bucket S3
 # Define regras para expiração automática de objetos baseado em prefixos e tempo
-resource "aws_s3_bucket_lifecycle_configuration" "bucket_lifecycle" {
+resource "aws_s3_bucket_lifecycle_configuration" "certificates_bucket_lifecycle_config" {
   count  = length(var.lifecycle_rule) > 0 ? 1 : 0
-  bucket = aws_s3_bucket.bucket.id
+  bucket = aws_s3_bucket.certificates_bucket.id
 
   dynamic "rule" {
     for_each = var.lifecycle_rule
@@ -38,6 +38,4 @@ resource "aws_s3_bucket_lifecycle_configuration" "bucket_lifecycle" {
       }
     }
   }
-
-  depends_on = [aws_s3_bucket.bucket]
 }
