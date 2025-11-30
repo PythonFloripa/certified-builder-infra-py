@@ -9,13 +9,16 @@ inputs:
 runs:
   using: 'composite'
   steps:
+
     - name: Terraform Init
       run: terraform init -input=false -upgrade=false
       working-directory: ${{ inputs.working-directory }}
+      shell: bash
 
     - name: Terraform Plan
       run: terraform plan -input=false -out=tfplan
       working-directory: ${{ inputs.working-directory }}
+      shell: bash
 
     - name: Terraform Apply
       run: |
