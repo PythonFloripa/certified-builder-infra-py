@@ -24,7 +24,7 @@ runs:
       run: |
         set -euo pipefail
         echo "[INFO] Applying changes for ${{ inputs.env }}..."
-        terraform apply -input=false tfplan
+        terraform apply -auto-approve -input=false tfplan
         echo "✅ Apply completed for ${{ inputs.env }}"
       working-directory: ${{ inputs.working-directory }}
       shell: bash
