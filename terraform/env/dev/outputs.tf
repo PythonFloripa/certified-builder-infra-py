@@ -53,6 +53,17 @@ output "products_table_arn" {
   value       = module.products_table.table_arn
 }
 
+# Informações do s3
+output "s3_bucket_name" {
+  description = "Nome do bucket S3"
+  value       = module.s3.bucket_name
+}
+
+output "s3_bucket_arn" {
+  description = "ARN do bucket S3"
+  value       = module.s3.bucket_arn
+}
+
 # # # Informações do SQS
 # # output "sqs_queue_url" {
 # #   description = "URL da fila SQS principal"
@@ -68,17 +79,6 @@ output "products_table_arn" {
 # #   description = "URL da Dead Letter Queue (builder)"
 # #   value       = module.sqs.builder_dlq_url
 # # }
-
-# #informações do s3
-# output "s3_bucket_name" {
-#   description = "Nome do bucket S3"
-#   value       = module.s3.bucket_name
-# }
-
-# output "s3_bucket_arn" {
-#   description = "ARN do bucket S3"
-#   value       = module.s3.bucket_arn
-# }
 
 ## Informações do Lambda
 # output "lambda_function_name" {
