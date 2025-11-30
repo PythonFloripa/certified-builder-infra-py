@@ -47,7 +47,7 @@ variable "environment" {
 variable "project_name" {
   description = "Nome do projeto"
   type        = string
-  default     = "tech-floripa-certificates"
+  default     = "certificates-tech-floripa"
 }
 
 # Configuração do DynamoDB - Modo de Baixo Custo
