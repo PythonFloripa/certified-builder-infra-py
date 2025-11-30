@@ -9,8 +9,8 @@ terraform {
   }
 
   backend "s3" {
-    bucket = "tech-floripa-certificates-dev-tf-state"
-    key    = "dev/terraform.tfstate"
+    bucket = "tech-floripa-certificates-dev-state"
+    key    = "terraform.tfstate"
     region = "us-east-1"
   }
 }
