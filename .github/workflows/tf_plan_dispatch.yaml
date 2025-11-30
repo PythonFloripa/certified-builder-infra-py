@@ -42,17 +42,16 @@ jobs:
           role-session-name: TerraformPlanSession-${{ matrix.env }}
 
       - name: Terraform Init
-          run: |
-            set -euo pipefail
-            terraform plan -input=false -out=tfplan
-            terraform show -no-color tfplan > plan-output.txt
-            echo "## Terraform Plan (${{ matrix.env }})"
-            echo '```hcl'
-            cat plan-output.txt
-            echo '```'
-            echo '```hcl'
-            cat plan-output.txt
-            echo '```'
-          } > plan-comment.md
+        run: terraform init -input=false -upgrade=false
+        working-directory: ${{ matrix.dir }}
 
+      - name: Terraform Plan
+        run: |
+          set -euo pipefail
+          terraform plan -input=false -out=tfplan
+          terraform show -no-color tfplan > plan-output.txt
+          echo "## Terraform Plan (${{ matrix.env }})"
+          echo '```hcl'
+          cat plan-output.txt
+          echo '```'
         working-directory: ${{ matrix.dir }}
