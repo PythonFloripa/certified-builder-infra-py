@@ -237,6 +237,22 @@ data "aws_iam_policy_document" "github_action_permissions" {
     actions   = ["logs:DescribeLogGroups"]
     resources = ["*"]
   }
+
+  # Permissão específica para a Role atualizar sua própria política
+  statement {
+    effect = "Allow"
+    actions = [
+      "iam:GetPolicy",
+      "iam:GetPolicyVersion",
+      "iam:ListPolicyVersions",
+      "iam:CreatePolicyVersion",
+      "iam:DeletePolicyVersion",
+      "iam:SetDefaultPolicyVersion"
+    ]
+    resources = [
+      "arn:aws:iam::${var.aws_account_id}:policy/github-actions-policy"
+    ]
+  }
 }
 
 resource "aws_iam_policy" "github_actions_policy" {
