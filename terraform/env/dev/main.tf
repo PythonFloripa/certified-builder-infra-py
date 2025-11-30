@@ -1,11 +1,11 @@
-# # ECR
-# module "ecr" {
-#   source                       = "../../modules/01.ecr"
-#   api_repository_name          = "${var.project_name}-api-${var.environment}"
-#   builder_repository_name      = "${var.project_name}-builder-${var.environment}"
-#   notification_repository_name = "${var.project_name}-notification-${var.environment}"
-#   project_name                 = var.project_name
-# }
+# ECR
+module "ecr" {
+  source                       = "../../modules/01.ecr"
+  api_repository_name          = "${var.project_name}-api-${var.environment}"
+  builder_repository_name      = "${var.project_name}-builder-${var.environment}"
+  notification_repository_name = "${var.project_name}-notification-${var.environment}"
+  project_name                 = var.project_name
+}
 
 # # DynamoDB Tables
 # module "certificates_table" {

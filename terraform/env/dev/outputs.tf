@@ -1,4 +1,13 @@
-# Outputs principais do Terraform
+# Informações do ECR
+output "ecr_repository_url" {
+  description = "URL do repositório ECR"
+  value       = module.ecr.api_repository_url
+}
+
+output "ecr_api_repository_name" {
+  description = "Nome do repositório ECR"
+  value       = module.ecr.api_repository_name
+}
 
 # Informações das tabelas de certificados
 # output "certificates_table_name" {
@@ -60,17 +69,6 @@
 # #   description = "URL da Dead Letter Queue (builder)"
 # #   value       = module.sqs.builder_dlq_url
 # # }
-
-# # Informações do ECR
-# output "ecr_repository_url" {
-#   description = "URL do repositório ECR"
-#   value       = module.ecr.api_repository_url
-# }
-
-# output "ecr_api_repository_name" {
-#   description = "Nome do repositório ECR"
-#   value       = module.ecr.api_repository_name
-# }
 
 # #informações do s3
 # output "s3_bucket_name" {
