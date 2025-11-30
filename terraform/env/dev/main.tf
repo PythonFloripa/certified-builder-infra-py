@@ -1,4 +1,4 @@
-# S3
+# S3 Bucket
 module "s3" {
   source       = "../../modules/03.bucket_s3"
   bucket_name  = "${var.project_name}-${var.environment}-bucket"
