@@ -1,4 +1,4 @@
-name: Terraform Apply from PR
+name: Manual Terraform Apply
 
 on:
   workflow_dispatch:
