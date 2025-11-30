@@ -55,7 +55,11 @@ data "aws_iam_policy_document" "github_action_permissions" {
       "iam:UntagRole",
       "iam:GetOpenIDConnectProvider",
       "iam:GetPolicy",
-      "iam:GetPolicyVersion"
+      "iam:GetPolicyVersion",
+      "iam:ListPolicyVersions",
+      "iam:CreatePolicyVersion",
+      "iam:DeletePolicyVersion",
+      "iam:SetDefaultPolicyVersion"
     ]
     resources = ["*"]
   }
