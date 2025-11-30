@@ -1,3 +1,14 @@
+# Informações do s3
+output "s3_bucket_name" {
+  description = "Nome do bucket S3"
+  value       = module.s3.bucket_name
+}
+
+output "s3_bucket_arn" {
+  description = "ARN do bucket S3"
+  value       = module.s3.bucket_arn
+}
+
 # # Informações do ECR
 # output "ecr_repository_url" {
 #   description = "URL do repositório ECR"
@@ -51,17 +62,6 @@
 # output "products_table_arn" {
 #   description = "ARN da tabela de produtos"
 #   value       = module.products_table.table_arn
-# }
-
-# # Informações do s3
-# output "s3_bucket_name" {
-#   description = "Nome do bucket S3"
-#   value       = module.s3.bucket_name
-# }
-
-# output "s3_bucket_arn" {
-#   description = "ARN do bucket S3"
-#   value       = module.s3.bucket_arn
 # }
 
 # # # Informações do SQS
