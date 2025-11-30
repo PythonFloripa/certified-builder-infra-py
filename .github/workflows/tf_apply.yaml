@@ -52,10 +52,6 @@ jobs:
         run: |
           PR_NUMBER=${{ steps.get_pr.outputs.pr_number }}
 
-          echo "Detecting changed files in PR $PR_NUMBER..."
-          # Fetch the list of changed files in the PR
-          gh pr checkout $PR_NUMBER
-
           FILES=$(gh pr view $PR_NUMBER --json files --jq '.files[].path')
           echo "Changed files from PR $PR_NUMBER:"
           echo "$FILES"
