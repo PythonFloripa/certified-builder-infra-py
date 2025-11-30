@@ -83,8 +83,8 @@ data "aws_iam_policy_document" "github_action_permissions" {
       "s3:DeleteObject",
       "s3:GetLifecycleConfiguration",
       "s3:PutLifecycleConfiguration"
-
     ]
+
     resources = [
       "arn:aws:s3:::${var.project_name}-${var.environment}-state",
       "arn:aws:s3:::${var.project_name}-${var.environment}-state/*",
