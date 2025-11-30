@@ -1,4 +1,4 @@
-name: Terraform Plan from PR
+name: Manual Terraform Plan
 
 on:
   workflow_dispatch:
