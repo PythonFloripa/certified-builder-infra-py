@@ -11,20 +11,44 @@ runs:
   steps:
 
     - name: Terraform Init
-      run: terraform init -input=false -upgrade=false
+      run: |
+        echo "[INFO] Initializing Terraform in ${{ inputs.working-directory }}..."
+        terraform init -input=false -upgrade=false
+        echo "[INFO] Terraform init completed."
       working-directory: ${{ inputs.working-directory }}
       shell: bash
 
+    - name: Terraform Validate
+      run: |
+        echo "[INFO] Validating Terraform configuration in ${{ inputs.working-directory }}..."
+        terraform validate
+        echo "[INFO] Terraform validate completed."
+      working-directory: ${{ inputs.working-directory }}
+      shell: bash
+      continue-on-error: true
+
+    - name: Terraform Format Check
+      run: |
+        echo "[INFO] Checking Terraform formatting in ${{ inputs.working-directory }}..."
+        terraform fmt -check
+        echo "[INFO] Terraform format check completed."
+      working-directory: ${{ inputs.working-directory }}
+      shell: bash
+      continue-on-error: true
+
     - name: Terraform Plan
-      run: terraform plan -input=false -out=tfplan
+      run: |
+        echo "[INFO] Running Terraform plan in ${{ inputs.working-directory }}..."
+        terraform plan -input=false -out=tfplan
+        echo "[INFO] Terraform plan completed."
       working-directory: ${{ inputs.working-directory }}
       shell: bash
 
     - name: Terraform Apply
       run: |
         set -euo pipefail
-        echo "[INFO] Applying changes for ${{ inputs.env }}..."
+        echo "[INFO] Applying changes for ${{ inputs.env }} in ${{ inputs.working-directory }}..."
         terraform apply -auto-approve -input=false tfplan
-        echo "✅ Apply completed for ${{ inputs.env }}"
+        echo "✅ Apply completed for ${{ inputs.env }} in ${{ inputs.working-directory }}"
       working-directory: ${{ inputs.working-directory }}
       shell: bash
