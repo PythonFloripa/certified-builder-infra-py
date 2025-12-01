@@ -39,29 +39,28 @@ resource "aws_iam_role" "github_actions_assume_role" {
 ### IAM Permissions for Github Action Role
 data "aws_iam_policy_document" "github_action_permissions" {
     # --- BEGIN: Required for Terraform plan/apply in CI ---
-    # Allow reading inline policies for Lambda roles
+    # Allow reading inline policies for all Lambda roles
     statement {
       effect = "Allow"
       actions = ["iam:GetRolePolicy"]
       resources = [
         "arn:aws:iam::${var.aws_account_id}:role/tech-floripa-certificates-lambda-role-dev",
         "arn:aws:iam::${var.aws_account_id}:role/tech-floripa-certificates-lambda-builder-role-dev",
-        "arn:aws:iam::${var.aws_account_id}:role/tech-floripa-certificates-lambda-notification-role-dev"
+        "arn:aws:iam::${var.aws_account_id}:role/tech-floripa-certificates-lambda-notification-role-dev",
+        "arn:aws:iam::${var.aws_account_id}:role/tech-floripa-certificates-lambda-*-role-dev"
       ]
     }
 
-    # Allow describing ECR images for Lambda builds
+    # Allow describing ECR images for all repos in this account (for Lambda builds)
     statement {
       effect = "Allow"
       actions = ["ecr:DescribeImages"]
       resources = [
-        "arn:aws:ecr:${var.aws_region}:${var.aws_account_id}:repository/tech-floripa-certificates-api-dev",
-        "arn:aws:ecr:${var.aws_region}:${var.aws_account_id}:repository/tech-floripa-certificates-builder-dev",
-        "arn:aws:ecr:${var.aws_region}:${var.aws_account_id}:repository/tech-floripa-certificates-notification-dev"
+        "arn:aws:ecr:${var.aws_region}:${var.aws_account_id}:repository/*"
       ]
     }
 
-    # Allow reading API Gateway API Keys
+    # Allow reading all API Gateway API Keys
     statement {
       effect = "Allow"
       actions = ["apigateway:GET"]
