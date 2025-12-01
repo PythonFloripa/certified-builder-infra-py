@@ -37,7 +37,10 @@ runs:
       continue-on-error: true
 
     - name: Terraform Plan
-      run: terraform plan -input=false -out=tfplan
+      run: |
+        echo "[INFO] Running Terraform plan in ${{ inputs.working-directory }}..."
+        terraform plan -input=false -out=tfplan
+        echo "[INFO] Terraform plan completed."
       working-directory: ${{ inputs.working-directory }}
       shell: bash
 
