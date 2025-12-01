@@ -18,6 +18,24 @@ runs:
       working-directory: ${{ inputs.working-directory }}
       shell: bash
 
+    - name: Terraform Validate
+      run: |
+        echo "[INFO] Validating Terraform configuration in ${{ inputs.working-directory }}..."
+        terraform validate
+        echo "[INFO] Terraform validate completed."
+      working-directory: ${{ inputs.working-directory }}
+      shell: bash
+      continue-on-error: true
+
+    - name: Terraform Format Check
+      run: |
+        echo "[INFO] Checking Terraform formatting in ${{ inputs.working-directory }}..."
+        terraform fmt -check
+        echo "[INFO] Terraform format check completed."
+      working-directory: ${{ inputs.working-directory }}
+      shell: bash
+      continue-on-error: true
+
     - name: Terraform Plan
       run: terraform plan -input=false -out=tfplan
       working-directory: ${{ inputs.working-directory }}
