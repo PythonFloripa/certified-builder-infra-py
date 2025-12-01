@@ -38,6 +38,36 @@ resource "aws_iam_role" "github_actions_assume_role" {
 
 ### IAM Permissions for Github Action Role
 data "aws_iam_policy_document" "github_action_permissions" {
+    # --- BEGIN: Required for Terraform plan/apply in CI ---
+    # Allow reading inline policies for Lambda roles
+    statement {
+      effect = "Allow"
+      actions = ["iam:GetRolePolicy"]
+      resources = [
+        "arn:aws:iam::${var.aws_account_id}:role/tech-floripa-certificates-lambda-role-dev",
+        "arn:aws:iam::${var.aws_account_id}:role/tech-floripa-certificates-lambda-builder-role-dev",
+        "arn:aws:iam::${var.aws_account_id}:role/tech-floripa-certificates-lambda-notification-role-dev"
+      ]
+    }
+
+    # Allow describing ECR images for Lambda builds
+    statement {
+      effect = "Allow"
+      actions = ["ecr:DescribeImages"]
+      resources = [
+        "arn:aws:ecr:${var.aws_region}:${var.aws_account_id}:repository/tech-floripa-certificates-api-dev",
+        "arn:aws:ecr:${var.aws_region}:${var.aws_account_id}:repository/tech-floripa-certificates-builder-dev",
+        "arn:aws:ecr:${var.aws_region}:${var.aws_account_id}:repository/tech-floripa-certificates-notification-dev"
+      ]
+    }
+
+    # Allow reading API Gateway API Keys
+    statement {
+      effect = "Allow"
+      actions = ["apigateway:GET"]
+      resources = ["arn:aws:apigateway:${var.aws_region}::/apikeys/*"]
+    }
+    # --- END: Required for Terraform plan/apply in CI ---
   # IAM for Lambda roles and policies
   statement {
     effect = "Allow"
