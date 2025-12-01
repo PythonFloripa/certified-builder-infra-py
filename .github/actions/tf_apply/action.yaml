@@ -11,7 +11,10 @@ runs:
   steps:
 
     - name: Terraform Init
-      run: terraform init -input=false -upgrade=false
+      run: |
+        echo "[INFO] Initializing Terraform in ${{ inputs.working-directory }}..."
+        terraform init -input=false -upgrade=false
+        echo "[INFO] Terraform init completed."
       working-directory: ${{ inputs.working-directory }}
       shell: bash
 
