@@ -38,6 +38,16 @@ resource "aws_iam_role" "github_actions_assume_role" {
 
 ### IAM Permissions for Github Action Role
 data "aws_iam_policy_document" "github_action_permissions" {
+        # Allow listing Lambda function versions (required for aws_lambda_function data sources)
+        statement {
+          effect = "Allow"
+          actions = ["lambda:ListVersionsByFunction"]
+          resources = [
+            "arn:aws:lambda:${var.aws_region}:${var.aws_account_id}:function:${var.project_name}-api-${var.environment}",
+            "arn:aws:lambda:${var.aws_region}:${var.aws_account_id}:function:${var.project_name}-builder-${var.environment}",
+            "arn:aws:lambda:${var.aws_region}:${var.aws_account_id}:function:${var.project_name}-notification-${var.environment}"
+          ]
+        }
     # --- BEGIN: Required for Terraform plan/apply in CI ---
     # Allow reading inline policies for all Lambda roles
     statement {
