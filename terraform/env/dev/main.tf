@@ -59,3 +59,55 @@ module "sqs" {
   project_name = var.project_name
   environment  = var.environment
 }
+
+# Lambda
+module "lambda" {
+  source = "../../modules/05.lambda"
+  project_name                = var.project_name
+  environment                 = var.environment
+  aws_region                  = var.aws_region
+  ecr_api_repository_name     = module.ecr.api_repository_name
+  ecr_api_repository_url      = module.ecr.api_repository_url
+  ecr_builder_repository_name = module.ecr.builder_repository_name
+  ecr_builder_repository_url  = module.ecr.builder_repository_url
+  ecr_builder_repository_arn  = module.ecr.builder_repository_arn
+  ecr_notification_repository_name = module.ecr.notification_repository_name
+  ecr_notification_repository_url  = module.ecr.notification_repository_url
+  ecr_notification_repository_arn  = module.ecr.notification_repository_arn
+  image_tag                   = var.lambda_image_tag
+  lambda_timeout              = var.lambda_timeout
+  lambda_memory_size          = var.lambda_memory_size
+  log_retention_days          = var.log_retention_days
+  url_service_tech   = var.url_service_tech
+  prefix_api_version = var.prefix_api_version
+  service_url_registration_api_solana = var.service_url_registration_api_solana
+  service_api_key_registration_api_solana = var.service_api_key_registration_api_solana
+  tech_floripa_certificate_validate_url = var.tech_floripa_certificate_validate_url
+  tech_floripa_logo_url = var.tech_floripa_logo_url
+  builder_queue_url      = module.sqs.builder_queue_url
+  builder_queue_arn      = module.sqs.builder_queue_arn
+  notification_queue_arn = module.sqs.notification_queue_arn
+  notification_queue_url = module.sqs.notification_queue_url
+  dynamodb_table_arns = [
+    module.certificates_table.table_arn,
+    module.orders_table.table_arn,
+    module.participants_table.table_arn,
+    module.products_table.table_arn
+  ]
+  ecr_repository_arn       = module.ecr.api_repository_arn
+  s3_bucket_arn            = module.s3.bucket_arn
+  s3_bucket_name           = module.s3.bucket_name
+  api_gateway_download_url = module.api_gateway.api_endpoint_download_certificate
+}
+
+# API Gateway
+module "api_gateway" {
+  source = "../../modules/06.api-gateway"
+  project_name         = var.project_name
+  environment          = var.environment
+  lambda_function_name = module.lambda.function_name
+  lambda_invoke_arn    = module.lambda.invoke_arn
+  throttle_rate_limit  = var.api_throttle_rate_limit
+  throttle_burst_limit = var.api_throttle_burst_limit
+  api_key_value        = var.api_key_value
+}
