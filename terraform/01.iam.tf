@@ -25,7 +25,7 @@ data "aws_iam_policy_document" "github_action_assume_role" {
     condition {
       test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${var.github_org}/${var.github_repo}:*"]
+      values   = ["repo:${var.github_org}/${var.github_repo}:*", "repo:${var.github_org}/certified-builder-app-py:*"]
     }
   }
 }
@@ -42,57 +42,57 @@ data "aws_iam_policy_document" "github_action_permissions" {
   # --- BROAD PERMISSIONS FOR TERRAFORM PLAN/APPLY ---
   # Lambda
   statement {
-    effect = "Allow"
-    actions = ["lambda:*"]
+    effect    = "Allow"
+    actions   = ["lambda:*"]
     resources = ["*"]
   }
 
   # IAM
   statement {
-    effect = "Allow"
-    actions = ["iam:*"]
+    effect    = "Allow"
+    actions   = ["iam:*"]
     resources = ["*"]
   }
 
   # S3
   statement {
-    effect = "Allow"
-    actions = ["s3:*"]
+    effect    = "Allow"
+    actions   = ["s3:*"]
     resources = ["*"]
   }
 
   # ECR
   statement {
-    effect = "Allow"
-    actions = ["ecr:*"]
+    effect    = "Allow"
+    actions   = ["ecr:*"]
     resources = ["*"]
   }
 
   # SQS
   statement {
-    effect = "Allow"
-    actions = ["sqs:*"]
+    effect    = "Allow"
+    actions   = ["sqs:*"]
     resources = ["*"]
   }
 
   # DynamoDB
   statement {
-    effect = "Allow"
-    actions = ["dynamodb:*"]
+    effect    = "Allow"
+    actions   = ["dynamodb:*"]
     resources = ["*"]
   }
 
   # API Gateway
   statement {
-    effect = "Allow"
-    actions = ["apigateway:*"]
+    effect    = "Allow"
+    actions   = ["apigateway:*"]
     resources = ["*"]
   }
 
   # CloudWatch Logs
   statement {
-    effect = "Allow"
-    actions = ["logs:*"]
+    effect    = "Allow"
+    actions   = ["logs:*"]
     resources = ["*"]
   }
 
