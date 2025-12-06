@@ -88,12 +88,13 @@ resource "aws_ecr_lifecycle_policy" "api_repository_policy" {
       },
       {
         rulePriority = 3
-        description  = "Remove qualquer imagem taggeada com mais de 1 dias (fallback de segurança)"
+        description  = "Remove qualquer imagem taggeada com mais de 1 dia (fallback de segurança)"
         selection = {
-          tagStatus = "tagged"
-          countType = "sinceImagePushed"
-          countUnit = "days"
-          countNumber = 1
+          tagStatus     = "tagged"
+          tagPrefixList = ["latest", "v", "dev", "prod", "staging", "main", "feature", "hotfix"]
+          countType     = "sinceImagePushed"
+          countUnit     = "days"
+          countNumber   = 1
         }
         action = {
           type = "expire"
@@ -135,12 +136,13 @@ resource "aws_ecr_lifecycle_policy" "builder_repository_policy" {
       },
       {
         rulePriority = 3
-        description  = "Remove qualquer imagem taggeada com mais de 1 dias (fallback de segurança)"
+        description  = "Remove qualquer imagem taggeada com mais de 1 dia (fallback de segurança)"
         selection = {
-          tagStatus = "tagged"
-          countType = "sinceImagePushed"
-          countUnit = "days"
-          countNumber = 1
+          tagStatus     = "tagged"
+          tagPrefixList = ["latest", "v", "dev", "prod", "staging", "main", "feature", "hotfix"]
+          countType     = "sinceImagePushed"
+          countUnit     = "days"
+          countNumber   = 1
         }
         action = {
           type = "expire"
@@ -183,12 +185,13 @@ resource "aws_ecr_lifecycle_policy" "notification_repository_policy" {
       },
       {
         rulePriority = 3
-        description  = "Remove qualquer imagem taggeada com mais de 1 dias (fallback de segurança)"
+        description  = "Remove qualquer imagem taggeada com mais de 1 dia (fallback de segurança)"
         selection = {
-          tagStatus = "tagged"
-          countType = "sinceImagePushed"
-          countUnit = "days"
-          countNumber = 1
+          tagStatus     = "tagged"
+          tagPrefixList = ["latest", "v", "dev", "prod", "staging", "main", "feature", "hotfix"]
+          countType     = "sinceImagePushed"
+          countUnit     = "days"
+          countNumber   = 1
         }
         action = {
           type = "expire"
