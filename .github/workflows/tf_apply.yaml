@@ -38,9 +38,26 @@ jobs:
       - name: Get PR Number
         id: get_pr
         run: |
-          PR_NUMBER=$(gh pr list --state merged --json number,mergeCommit --jq ".[] | select(.mergeCommit.oid == \"${{ github.sha }}\") | .number")
+          # Tentar múltiplas abordagens para encontrar o PR
+          echo "Searching for PR associated with commit ${{ github.sha }}..."
+          
+          # Método 1: Buscar por merge commit
+          PR_NUMBER=$(gh pr list --state merged --json number,mergeCommit --jq ".[] | select(.mergeCommit.oid == \"${{ github.sha }}\") | .number" | head -1)
+          
+          # Método 2: Buscar por commit na branch (caso seja squash merge)
           if [ -z "$PR_NUMBER" ]; then
-            echo "No PR found for this commit. Will apply all environments as fallback."
+            echo "Trying to find PR by commit message..."
+            PR_NUMBER=$(gh pr list --state merged --json number,title --jq ".[] | select(.title | contains(\"${{ github.event.head_commit.message }}\")) | .number" | head -1)
+          fi
+          
+          # Método 3: Buscar PRs mergeados nas últimas 2 horas
+          if [ -z "$PR_NUMBER" ]; then
+            echo "Searching recent merged PRs..."
+            PR_NUMBER=$(gh pr list --state merged --json number,mergedAt --jq ".[] | select(.mergedAt > (now - 7200)) | .number" | head -1)
+          fi
+          
+          if [ -z "$PR_NUMBER" ]; then
+            echo "No PR found for this commit. Will detect changes via git diff."
             echo "pr_number=" >> $GITHUB_OUTPUT
           else
             echo "Found PR number: $PR_NUMBER"
@@ -59,28 +76,75 @@ jobs:
             echo "Changed files from PR $PR_NUMBER:"
             echo "$FILES"
           else
-            # Método 2: Detectar via git diff do commit atual
+            # Método 2: Detectar via git diff
             echo "No PR found. Detecting changes from commit diff..."
-            FILES=$(git diff --name-only HEAD~1 HEAD)
-            echo "Changed files from commit ${{ github.sha }}:"
+            
+            # Tentar diferentes abordagens para capturar mudanças
+            if git merge-base --is-ancestor HEAD~1 HEAD; then
+              FILES=$(git diff --name-only HEAD~1 HEAD)
+            else
+              # Para merges, comparar com o primeiro parent
+              FILES=$(git diff --name-only HEAD^1 HEAD)
+            fi
+            
+            # Se ainda não encontrou mudanças, usar diff dos últimos 2 commits
+            if [ -z "$FILES" ]; then
+              FILES=$(git diff --name-only HEAD~2 HEAD)
+            fi
+            
+            echo "Changed files from commit analysis:"
             echo "$FILES"
           fi
 
           # Verificar mudanças no ambiente dev (terraform/env/dev/)
           if echo "$FILES" | grep -q "^terraform/env/dev/"; then
-            echo "Dev environment changes detected"
+            echo "✅ Dev environment changes detected"
             echo "has_dev=true" >> $GITHUB_OUTPUT
           else
-            echo "No dev environment changes detected"
+            echo "❌ No dev environment changes detected"
+            echo "has_dev=false" >> $GITHUB_OUTPUT
           fi
 
           # Verificar mudanças na infraestrutura compartilhada (terraform/ excluindo terraform/env/)
           if echo "$FILES" | grep "^terraform/" | grep -v "^terraform/env/" | grep -q .; then
-            echo "Shared infrastructure changes detected"
+            echo "✅ Shared infrastructure changes detected"
             echo "has_shared=true" >> $GITHUB_OUTPUT
           else
-            echo "No shared infrastructure changes detected"
+            echo "❌ No shared infrastructure changes detected"
+            echo "has_shared=false" >> $GITHUB_OUTPUT
           fi
+          
+          # NOVA LÓGICA: Verificar mudanças nos módulos que afetam TODOS os ambientes
+          if echo "$FILES" | grep -q "^terraform/modules/"; then
+            echo "🔄 Module changes detected - will apply to ALL environments"
+            echo "has_modules=true" >> $GITHUB_OUTPUT
+            # Sobrescrever as flags para garantir que ambos ambientes sejam aplicados
+            sed -i 's/has_dev=false/has_dev=true/' $GITHUB_OUTPUT
+            sed -i 's/has_shared=false/has_shared=true/' $GITHUB_OUTPUT
+          else
+            echo "has_modules=false" >> $GITHUB_OUTPUT
+          fi
+          
+          # Ler os valores finais para debug
+          HAS_SHARED=$(grep "has_shared=" $GITHUB_OUTPUT | cut -d'=' -f2 | tail -1)
+          HAS_DEV=$(grep "has_dev=" $GITHUB_OUTPUT | cut -d'=' -f2 | tail -1)
+          HAS_MODULES=$(grep "has_modules=" $GITHUB_OUTPUT | cut -d'=' -f2 | tail -1)
+          
+          # Debug: Mostrar o que será aplicado
+          echo "=== SUMMARY ==="
+          echo "Shared infrastructure: $([ "$HAS_SHARED" = "true" ] && echo "✅ YES" || echo "❌ NO")"
+          echo "Dev environment: $([ "$HAS_DEV" = "true" ] && echo "✅ YES" || echo "❌ NO")"
+          echo "Module changes: $([ "$HAS_MODULES" = "true" ] && echo "✅ YES" || echo "❌ NO")"
+
+      - name: Debug Detection Results
+        run: |
+          echo "=== DETECTION RESULTS ==="
+          echo "PR Number: ${{ steps.get_pr.outputs.pr_number }}"
+          echo "Has Shared: ${{ steps.detect.outputs.has_shared }}"
+          echo "Has Dev: ${{ steps.detect.outputs.has_dev }}"
+          echo "Has Modules: ${{ steps.detect.outputs.has_modules }}"
+          echo "Commit SHA: ${{ github.sha }}"
+          echo "Event: ${{ github.event_name }}"
 
       - name: Apply Shared Infrastructure
         if: steps.detect.outputs.has_shared == 'true'
