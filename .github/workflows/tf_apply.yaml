@@ -40,32 +40,46 @@ jobs:
         run: |
           PR_NUMBER=$(gh pr list --state merged --json number,mergeCommit --jq ".[] | select(.mergeCommit.oid == \"${{ github.sha }}\") | .number")
           if [ -z "$PR_NUMBER" ]; then
-            echo "No PR found for this commit."
-            exit 0
+            echo "No PR found for this commit. Will apply all environments as fallback."
+            echo "pr_number=" >> $GITHUB_OUTPUT
+          else
+            echo "Found PR number: $PR_NUMBER"
+            echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
           fi
-          echo "Found PR number: $PR_NUMBER"
-          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
 
-      - name: Detect changed Terraform directories from PR
+      - name: Detect changed Terraform directories
         id: detect
-        if: steps.get_pr.outputs.pr_number
         run: |
-          PR_NUMBER=${{ steps.get_pr.outputs.pr_number }}
-
-          FILES=$(gh pr view $PR_NUMBER --json files --jq '.files[].path')
-          echo "Changed files from PR $PR_NUMBER:"
-          echo "$FILES"
-
-          # Check for dev environment changes (terraform/env/dev/)
-          if echo "$FILES" | grep -q "^terraform/env/dev/"; then
-            echo "setting has_dev=true"
-            echo "has_dev=true" >> $GITHUB_OUTPUT
+          if [ -n "${{ steps.get_pr.outputs.pr_number }}" ]; then
+            # Método 1: Detectar via PR
+            PR_NUMBER=${{ steps.get_pr.outputs.pr_number }}
+            echo "Detecting changes from PR $PR_NUMBER..."
+            
+            FILES=$(gh pr view $PR_NUMBER --json files --jq '.files[].path')
+            echo "Changed files from PR $PR_NUMBER:"
+            echo "$FILES"
+          else
+            # Método 2: Detectar via git diff do commit atual
+            echo "No PR found. Detecting changes from commit diff..."
+            FILES=$(git diff --name-only HEAD~1 HEAD)
+            echo "Changed files from commit ${{ github.sha }}:"
+            echo "$FILES"
           fi
 
-          # Check for shared infrastructure changes (top-level terraform/, excluding terraform/env/)
+          # Verificar mudanças no ambiente dev (terraform/env/dev/)
+          if echo "$FILES" | grep -q "^terraform/env/dev/"; then
+            echo "Dev environment changes detected"
+            echo "has_dev=true" >> $GITHUB_OUTPUT
+          else
+            echo "No dev environment changes detected"
+          fi
+
+          # Verificar mudanças na infraestrutura compartilhada (terraform/ excluindo terraform/env/)
           if echo "$FILES" | grep "^terraform/" | grep -v "^terraform/env/" | grep -q .; then
-            echo "setting has_shared=true"
+            echo "Shared infrastructure changes detected"
             echo "has_shared=true" >> $GITHUB_OUTPUT
+          else
+            echo "No shared infrastructure changes detected"
           fi
 
       - name: Apply Shared Infrastructure
