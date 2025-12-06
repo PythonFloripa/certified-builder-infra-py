@@ -64,7 +64,7 @@ variable "image_tag" {
 variable "lambda_timeout" {
   description = "Timeout da função Lambda em segundos"
   type        = number
-  default     = 360
+  default     = 900
 }
 
 variable "lambda_memory_size" {
