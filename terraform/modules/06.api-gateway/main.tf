@@ -16,6 +16,14 @@ locals {
               lambda_integration = true
               cors_enabled = true
             }
+            # Endpoint para criação em lote de certificados
+            "create-batch" = {
+              method = "POST"
+              authorization = "NONE"
+              api_key_required = true  # Exige API Key para operações em lote
+              lambda_integration = true
+              cors_enabled = true
+            }
             # Exemplo de como adicionar novos endpoints facilmente:
             # "list" = {
             #   method = "GET"
