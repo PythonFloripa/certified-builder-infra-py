@@ -27,7 +27,6 @@ A estrutura de pastas do projeto é organizada da seguinte forma:
 │   │   ├── orders/
 │   │   ├── participants/
 │   │   └── products/
-│   ├── ecr/
 │   ├── lambda/
 │   └── sqs/
 └── README.md
@@ -79,31 +78,13 @@ A seguir estão os serviços da AWS criados por este projeto e suas respectivas 
     - `environment`: Ambiente de deploy.
     - `project_name`: Nome do projeto.
 
-### ECR (Elastic Container Registry)
-
-- **Descrição**: Cria os repositórios de imagens Docker para a aplicação.
-- **Variáveis**:
-    - `project_name`: Nome do projeto.
-    - `api_repository_name`: Nome do repositório ECR para a API.
-    - `builder_repository_name`: Nome do repositório ECR para o builder.
-    - `notification_repository_name`: Nome do repositório ECR para o notificador.
-
 ### Lambda
 
-- **Descrição**: Cria as funções Lambda que executam a aplicação containerizada.
+- **Descrição**: Cria as funções Lambda no formato ZIP e a infraestrutura associada.
 - **Variáveis**:
     - `project_name`: Nome do projeto.
     - `environment`: Ambiente de deploy.
     - `aws_region`: Região AWS.
-    - `ecr_api_repository_name`: Nome do repositório ECR da API.
-    - `ecr_api_repository_url`: URL do repositório ECR da API.
-    - `ecr_builder_repository_name`: Nome do repositório ECR do builder.
-    - `ecr_builder_repository_url`: URL do repositório ECR do builder.
-    - `ecr_builder_repository_arn`: ARN do repositório ECR do builder.
-    - `ecr_notification_repository_name`: Nome do repositório ECR do notificador.
-    - `ecr_notification_repository_url`: URL do repositório ECR do notificador.
-    - `ecr_notification_repository_arn`: ARN do repositório ECR do notificador.
-    - `image_tag`: Tag da imagem Docker.
     - `lambda_timeout`: Timeout da função Lambda em segundos.
     - `lambda_memory_size`: Memória alocada para a função Lambda em MB.
     - `log_retention_days`: Dias de retenção dos logs do CloudWatch.
@@ -114,10 +95,16 @@ A seguir estão os serviços da AWS criados por este projeto e suas respectivas 
     - `builder_queue_arn`: ARN da fila SQS builder.
     - `notification_queue_arn`: ARN da fila SQS notification.
     - `notification_queue_url`: URL da fila SQS notification.
-    - `ecr_repository_arn`: ARN do repositório ECR.
     - `s3_bucket_arn`: ARN do bucket S3.
     - `s3_bucket_name`: Nome do bucket S3.
     - `api_gateway_download_url`: URL base do endpoint de download do API Gateway.
+
+## Fluxo de Deploy
+
+- O Terraform cria as funções Lambda, roles, filas SQS, tabelas DynamoDB, bucket S3 e API Gateway.
+- Cada função é inicializada com um ZIP placeholder mínimo apenas para permitir a criação do recurso.
+- Os repositórios `certified-builder-api-py`, `certified_builder_py` e `certified-builder-notification-py` publicam o código real usando `aws lambda update-function-code`.
+- O fluxo local com Docker é apenas para emulação de runtime em `localhost:9000`.
 
 ### SQS (Simple Queue Service)
 

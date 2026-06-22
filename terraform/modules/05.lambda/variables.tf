@@ -15,52 +15,6 @@ variable "aws_region" {
   type        = string
 }
 
-variable "ecr_api_repository_name" {
-  description = "Nome do repositório ECR"
-  type        = string
-}
-
-variable "ecr_api_repository_url" {
-  description = "URL do repositório ECR"
-  type        = string
-}
-
-variable "ecr_builder_repository_name" {
-  description = "Nome do repositório ECR"
-  type        = string
-}
-
-variable "ecr_builder_repository_url" {
-  description = "URL do repositório ECR"
-  type        = string
-}
-
-variable "ecr_builder_repository_arn" {
-  description = "ARN do repositório ECR"
-  type        = string
-}
-
-variable "ecr_notification_repository_name" {
-  description = "Nome do repositório ECR"
-  type        = string
-}
-
-variable "ecr_notification_repository_url" {
-  description = "URL do repositório ECR"
-  type        = string
-}
-
-variable "ecr_notification_repository_arn" {
-  description = "ARN do repositório ECR"
-  type        = string
-}
-
-variable "image_tag" {
-  description = "Tag da imagem Docker"
-  type        = string
-  default     = "latest"
-}
-
 variable "lambda_timeout" {
   description = "Timeout da função Lambda em segundos"
   type        = number
@@ -115,12 +69,6 @@ variable "notification_queue_arn" {
 
 variable "notification_queue_url" {
   description = "URL da fila SQS notification"
-  type        = string
-}
-
-# ARN do repositório ECR para políticas IAM
-variable "ecr_repository_arn" {
-  description = "ARN do repositório ECR"
   type        = string
 }
 

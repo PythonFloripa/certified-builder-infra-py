@@ -9,17 +9,6 @@ output "s3_bucket_arn" {
   value       = module.s3.bucket_arn
 }
 
-# Informações do ECR
-output "ecr_repository_url" {
-  description = "URL do repositório ECR"
-  value       = module.ecr.api_repository_url
-}
-
-output "ecr_api_repository_name" {
-  description = "Nome do repositório ECR"
-  value       = module.ecr.api_repository_name
-}
-
 # Informações das tabelas de certificados
 output "certificates_table_name" {
   description = "Nome da tabela de certificados"
@@ -91,6 +80,16 @@ output "lambda_function_arn" {
   value       = module.lambda.function_arn
 }
 
+output "lambda_builder_function_name" {
+  description = "Nome da função Lambda Builder"
+  value       = module.lambda.builder_function_name
+}
+
+output "lambda_builder_function_arn" {
+  description = "ARN da função Lambda Builder"
+  value       = module.lambda.builder_function_arn
+}
+
 # Informações da Lambda de Notificação
 output "lambda_notification_function_name" {
   description = "Nome da função Lambda de Notificação"
@@ -135,12 +134,10 @@ output "infrastructure_summary" {
     lambda = {
       function_name              = module.lambda.function_name
       function_arn               = module.lambda.function_arn
+      builder_function_name      = module.lambda.builder_function_name
+      builder_function_arn       = module.lambda.builder_function_arn
       notification_function_name = module.lambda.notification_function_name
       notification_function_arn  = module.lambda.notification_function_arn
-    }
-    ecr = {
-      repository_url      = module.ecr.api_repository_url
-      api_repository_name = module.ecr.api_repository_name
     }
     sqs = {
       queue_url = module.sqs.queue_url

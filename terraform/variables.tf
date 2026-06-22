@@ -53,13 +53,6 @@ variable "project_name" {
 # Configuração do DynamoDB - Modo de Baixo Custo
 # Todas as tabelas usam PAY_PER_REQUEST por padrão (paga apenas pelo que usar)
 
-# Variáveis para Lambda Function
-variable "lambda_image_tag" {
-  description = "Tag da imagem Docker para o Lambda"
-  type        = string
-  default     = "latest"
-}
-
 variable "lambda_timeout" {
   description = "Timeout da função Lambda em segundos"
   type        = number

@@ -61,13 +61,6 @@ data "aws_iam_policy_document" "github_action_permissions" {
     resources = ["*"]
   }
 
-  # ECR
-  statement {
-    effect    = "Allow"
-    actions   = ["ecr:*"]
-    resources = ["*"]
-  }
-
   # SQS
   statement {
     effect    = "Allow"
