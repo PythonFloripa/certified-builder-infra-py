@@ -36,6 +36,51 @@ runs:
       shell: bash
       continue-on-error: true
 
+    - name: Delete image-based Lambdas before ZIP migration
+      if: inputs.env == 'dev'
+      run: |
+        set -euo pipefail
+
+        migrate_lambda() {
+          local function_name="$1"
+          local package_type
+
+          package_type="$(aws lambda get-function-configuration \
+            --function-name "$function_name" \
+            --query 'PackageType' \
+            --output text 2>/dev/null || true)"
+
+          if [ -z "$package_type" ] || [ "$package_type" = "None" ]; then
+            echo "[INFO] Function $function_name not found. Nothing to migrate."
+            return 0
+          fi
+
+          if [ "$package_type" != "Image" ]; then
+            echo "[INFO] Function $function_name already uses package type $package_type. Skipping deletion."
+            return 0
+          fi
+
+          echo "[INFO] Deleting image-based function $function_name so Terraform can recreate it as ZIP..."
+          aws lambda delete-function --function-name "$function_name"
+
+          for attempt in $(seq 1 30); do
+            if ! aws lambda get-function --function-name "$function_name" >/dev/null 2>&1; then
+              echo "[INFO] Function $function_name deleted."
+              return 0
+            fi
+            echo "[INFO] Waiting for $function_name deletion to complete ($attempt/30)..."
+            sleep 10
+          done
+
+          echo "[ERROR] Timed out waiting for $function_name deletion."
+          exit 1
+        }
+
+        migrate_lambda "tech-floripa-certificates-api-dev"
+        migrate_lambda "tech-floripa-certificates-builder-dev"
+        migrate_lambda "tech-floripa-certificates-notification-dev"
+      shell: bash
+
     - name: Terraform Plan
       run: |
         echo "[INFO] Running Terraform plan in ${{ inputs.working-directory }}..."
