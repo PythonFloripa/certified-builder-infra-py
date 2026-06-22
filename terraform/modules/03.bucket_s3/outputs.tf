@@ -12,5 +12,5 @@ output "bucket_arn" {
 
 output "lifecycle_rule" {
   description = "Lista de regras de ciclo de vida configuradas para o bucket S3 (sempre retorna uma lista, vazia se não houver regras)"
-  value       = aws_s3_bucket_lifecycle_configuration.certificates_bucket_lifecycle_config[*].rule
+  value       = var.lifecycle_rule
 }

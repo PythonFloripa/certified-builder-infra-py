@@ -61,6 +61,22 @@ data "aws_iam_policy_document" "github_action_permissions" {
     resources = ["*"]
   }
 
+  # ECR transitório: necessário enquanto o Terraform ainda precisa ler e remover
+  # os repositórios e lifecycle policies antigos do estado.
+  statement {
+    effect = "Allow"
+    actions = [
+      "ecr:DescribeRepositories",
+      "ecr:ListTagsForResource",
+      "ecr:GetLifecyclePolicy",
+      "ecr:DeleteLifecyclePolicy",
+      "ecr:DeleteRepository"
+    ]
+    resources = [
+      "arn:aws:ecr:*:${var.aws_account_id}:repository/tech-floripa-certificates-*"
+    ]
+  }
+
   # SQS
   statement {
     effect    = "Allow"
