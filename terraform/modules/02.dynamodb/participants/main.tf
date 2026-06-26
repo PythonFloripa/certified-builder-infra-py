@@ -2,14 +2,48 @@
 # Baseado no modelo: src/domain/entity/participant.py
 
 resource "aws_dynamodb_table" "participants" {
-  name           = var.table_name
-  billing_mode   = "PAY_PER_REQUEST"  # Modo mais econômico - paga apenas pelo que usar
-  hash_key       = "id"
+  name         = var.table_name
+  billing_mode = "PAY_PER_REQUEST" # Modo mais econômico - paga apenas pelo que usar
+  hash_key     = "id"
 
   # Definição dos atributos baseados no modelo Participant
   attribute {
     name = "id"
-    type = "S"  # String para UUID
+    type = "S" # String para UUID
+  }
+
+  attribute {
+    name = "email"
+    type = "S"
+  }
+
+  attribute {
+    name = "cpf"
+    type = "S"
+  }
+
+  attribute {
+    name = "city"
+    type = "S"
+  }
+
+  global_secondary_index {
+    name            = "participants_by_email_idx"
+    hash_key        = "email"
+    projection_type = "ALL"
+  }
+
+  global_secondary_index {
+    name            = "participants_by_cpf_idx"
+    hash_key        = "cpf"
+    projection_type = "ALL"
+  }
+
+  global_secondary_index {
+    name            = "participants_by_city_idx"
+    hash_key        = "city"
+    range_key       = "email"
+    projection_type = "ALL"
   }
 
   # Criptografia básica (sem custo adicional)

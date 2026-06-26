@@ -4,6 +4,13 @@ data "archive_file" "lambda_bootstrap" {
   output_path = "${path.module}/bootstrap/lambda-bootstrap.zip"
 }
 
+locals {
+  dynamodb_resource_arns = concat(
+    var.dynamodb_table_arns,
+    [for arn in var.dynamodb_table_arns : "${arn}/index/*"]
+  )
+}
+
 resource "aws_iam_role" "lambda_execution_role" {
   name = "${var.project_name}-lambda-role-${var.environment}"
 
@@ -49,7 +56,7 @@ resource "aws_iam_role_policy" "lambda_custom_policy" {
           "dynamodb:Query",
           "dynamodb:Scan"
         ]
-        Resource = var.dynamodb_table_arns
+        Resource = local.dynamodb_resource_arns
       },
       {
         Effect = "Allow"
@@ -295,7 +302,7 @@ resource "aws_iam_role_policy" "lambda_notification_custom_policy" {
           "dynamodb:Query",
           "dynamodb:Scan"
         ]
-        Resource = var.dynamodb_table_arns
+        Resource = local.dynamodb_resource_arns
       },
       {
         Effect = "Allow"
