@@ -5,14 +5,6 @@ module "s3" {
   environment  = var.environment
   project_name = var.project_name
   region       = var.aws_region
-  lifecycle_rule = [
-    {
-      id         = "lifecycle-rule"
-      prefix     = "certificates/"
-      expiration = 90
-      status     = "Enabled"
-    }
-  ]
 }
 
 # DynamoDB Tables
