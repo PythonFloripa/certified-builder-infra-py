@@ -52,5 +52,10 @@ output "api_endpoint_download_certificate" {
   value       = "https://${aws_api_gateway_rest_api.api.id}.execute-api.${data.aws_region.current.id}.amazonaws.com/${aws_api_gateway_stage.api_stage.stage_name}/api/v1/certificate/download"
 }
 
+output "api_endpoint_list_user_certificates" {
+  description = "URL base do endpoint para listar certificados por email"
+  value       = "https://${aws_api_gateway_rest_api.api.id}.execute-api.${data.aws_region.current.id}.amazonaws.com/${aws_api_gateway_stage.api_stage.stage_name}/api/v1/users/{email}/certificates"
+}
+
 # Data source para obter a região atual
 data "aws_region" "current" {}

@@ -10,19 +10,19 @@ locals {
         "certificate" = {
           endpoints = {
             "create" = {
-              method = "POST"
-              authorization = "NONE"
-              api_key_required = true  # Exige API Key
+              method             = "POST"
+              authorization      = "NONE"
+              api_key_required   = true # Exige API Key
               lambda_integration = true
-              cors_enabled = true
+              cors_enabled       = true
             }
             # Endpoint para criação em lote de certificados
             "create-batch" = {
-              method = "POST"
-              authorization = "NONE"
-              api_key_required = true  # Exige API Key para operações em lote
+              method             = "POST"
+              authorization      = "NONE"
+              api_key_required   = true # Exige API Key para operações em lote
               lambda_integration = true
-              cors_enabled = true
+              cors_enabled       = true
             }
             # Exemplo de como adicionar novos endpoints facilmente:
             # "list" = {
@@ -49,14 +49,14 @@ locals {
                   - email + product_id (combinação específica)
                   - order_id + product_id (para filtragem adicional)
                 */
-                "order_id" = false    # Query parameter opcional
-                "email" = false       # Query parameter opcional 
-                "product_id" = false  # Query parameter opcional
+                "order_id"   = false # Query parameter opcional
+                "email"      = false # Query parameter opcional 
+                "product_id" = false # Query parameter opcional
               }
-              authorization = "NONE"
-              api_key_required = true  # Exige API Key
+              authorization      = "NONE"
+              api_key_required   = true # Exige API Key
               lambda_integration = true
-              cors_enabled = true
+              cors_enabled       = true
               # Validação será realizada no Lambda, não no API Gateway
               # pois precisamos verificar se pelo menos um parâmetro foi fornecido
             }
@@ -73,12 +73,12 @@ locals {
                   - HTML informativo se certificado não foi gerado
                   - 404 se certificado não encontrado ou UUID inválido
                 */
-                "id" = true    # UUID do certificado (obrigatório)
+                "id" = true # UUID do certificado (obrigatório)
               }
-              authorization = "NONE"
-              api_key_required = false  # Não exige API Key para downloads
+              authorization      = "NONE"
+              api_key_required   = false # Não exige API Key para downloads
               lambda_integration = true
-              cors_enabled = true
+              cors_enabled       = true
             }
           }
         }
@@ -103,13 +103,13 @@ locals {
       for level2_key, level2_value in level1_value : [
         for level3_key, level3_value in level2_value : [
           for endpoint_key, endpoint_config in level3_value.endpoints : {
-            path_key = "${level1_key}-${level2_key}-${level3_key}-${endpoint_key}"
-            level1 = level1_key
-            level2 = level2_key
-            level3 = level3_key
-            endpoint = endpoint_key
+            path_key  = "${level1_key}-${level2_key}-${level3_key}-${endpoint_key}"
+            level1    = level1_key
+            level2    = level2_key
+            level3    = level3_key
+            endpoint  = endpoint_key
             full_path = "/${level1_key}/${level2_key}/${level3_key}/${endpoint_key}"
-            config = endpoint_config
+            config    = endpoint_config
           }
         ]
       ]
@@ -119,6 +119,17 @@ locals {
   # Criar mapa para facilitar referências
   paths_map = {
     for path in local.api_paths : path.path_key => path
+  }
+
+  list_user_certificates_endpoint = {
+    method = "GET"
+    query_string_parameters = {
+      "success" = false
+    }
+    authorization      = "NONE"
+    api_key_required   = true
+    lambda_integration = true
+    cors_enabled       = true
   }
 }
 
@@ -141,7 +152,7 @@ resource "aws_api_gateway_rest_api" "api" {
 # Criação dinâmica dos recursos de primeiro nível (/api)
 resource "aws_api_gateway_resource" "level1_resources" {
   for_each = toset([for path in local.api_paths : path.level1])
-  
+
   rest_api_id = aws_api_gateway_rest_api.api.id
   parent_id   = aws_api_gateway_rest_api.api.root_resource_id
   path_part   = each.value
@@ -150,7 +161,7 @@ resource "aws_api_gateway_resource" "level1_resources" {
 # Criação dinâmica dos recursos de segundo nível (/api/v1)
 resource "aws_api_gateway_resource" "level2_resources" {
   for_each = toset([for path in local.api_paths : "${path.level1}/${path.level2}"])
-  
+
   rest_api_id = aws_api_gateway_rest_api.api.id
   parent_id   = aws_api_gateway_resource.level1_resources[split("/", each.value)[0]].id
   path_part   = split("/", each.value)[1]
@@ -159,16 +170,34 @@ resource "aws_api_gateway_resource" "level2_resources" {
 # Criação dinâmica dos recursos de terceiro nível (/api/v1/certificate)
 resource "aws_api_gateway_resource" "level3_resources" {
   for_each = toset([for path in local.api_paths : "${path.level1}/${path.level2}/${path.level3}"])
-  
+
   rest_api_id = aws_api_gateway_rest_api.api.id
   parent_id   = aws_api_gateway_resource.level2_resources["${split("/", each.value)[0]}/${split("/", each.value)[1]}"].id
   path_part   = split("/", each.value)[2]
 }
 
+resource "aws_api_gateway_resource" "users_resource" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  parent_id   = aws_api_gateway_resource.level2_resources["api/v1"].id
+  path_part   = "users"
+}
+
+resource "aws_api_gateway_resource" "user_email_resource" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  parent_id   = aws_api_gateway_resource.users_resource.id
+  path_part   = "{email}"
+}
+
+resource "aws_api_gateway_resource" "user_certificates_resource" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  parent_id   = aws_api_gateway_resource.user_email_resource.id
+  path_part   = "certificates"
+}
+
 # Criação dinâmica dos recursos de quarto nível (/api/v1/certificate/create)
 resource "aws_api_gateway_resource" "endpoint_resources" {
   for_each = local.paths_map
-  
+
   rest_api_id = aws_api_gateway_rest_api.api.id
   parent_id   = aws_api_gateway_resource.level3_resources["${each.value.level1}/${each.value.level2}/${each.value.level3}"].id
   path_part   = each.value.endpoint
@@ -177,11 +206,11 @@ resource "aws_api_gateway_resource" "endpoint_resources" {
 # Criação dinâmica dos métodos HTTP
 resource "aws_api_gateway_method" "endpoint_methods" {
   for_each = local.paths_map
-  
-  rest_api_id   = aws_api_gateway_rest_api.api.id
-  resource_id   = aws_api_gateway_resource.endpoint_resources[each.key].id
-  http_method   = each.value.config.method
-  authorization = each.value.config.authorization
+
+  rest_api_id      = aws_api_gateway_rest_api.api.id
+  resource_id      = aws_api_gateway_resource.endpoint_resources[each.key].id
+  http_method      = each.value.config.method
+  authorization    = each.value.config.authorization
   api_key_required = lookup(each.value.config, "api_key_required", false)
 
   # Configuração dos parâmetros de requisição incluindo query parameters
@@ -197,16 +226,40 @@ resource "aws_api_gateway_method" "endpoint_methods" {
   )
 }
 
+resource "aws_api_gateway_method" "list_user_certificates_method" {
+  rest_api_id      = aws_api_gateway_rest_api.api.id
+  resource_id      = aws_api_gateway_resource.user_certificates_resource.id
+  http_method      = local.list_user_certificates_endpoint.method
+  authorization    = local.list_user_certificates_endpoint.authorization
+  api_key_required = local.list_user_certificates_endpoint.api_key_required
+
+  request_parameters = {
+    "method.request.header.Content-Type" = true
+    "method.request.path.email"          = true
+    "method.request.querystring.success" = false
+  }
+}
+
 # Criação dinâmica das integrações com Lambda
 resource "aws_api_gateway_integration" "lambda_integrations" {
   for_each = {
     for key, path in local.paths_map : key => path
     if path.config.lambda_integration
   }
-  
+
   rest_api_id = aws_api_gateway_rest_api.api.id
   resource_id = aws_api_gateway_resource.endpoint_resources[each.key].id
   http_method = aws_api_gateway_method.endpoint_methods[each.key].http_method
+
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = var.lambda_invoke_arn
+}
+
+resource "aws_api_gateway_integration" "list_user_certificates_integration" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  resource_id = aws_api_gateway_resource.user_certificates_resource.id
+  http_method = aws_api_gateway_method.list_user_certificates_method.http_method
 
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
@@ -219,7 +272,7 @@ resource "aws_lambda_permission" "api_gateway_invoke" {
   action        = "lambda:InvokeFunction"
   function_name = var.lambda_function_name
   principal     = "apigateway.amazonaws.com"
-  
+
   # Permite qualquer método do API Gateway (mais flexível para múltiplos endpoints)
   source_arn = "${aws_api_gateway_rest_api.api.execution_arn}/*/*"
 }
@@ -230,9 +283,16 @@ resource "aws_api_gateway_method" "cors_methods" {
     for key, path in local.paths_map : key => path
     if path.config.cors_enabled
   }
-  
+
   rest_api_id   = aws_api_gateway_rest_api.api.id
   resource_id   = aws_api_gateway_resource.endpoint_resources[each.key].id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_method" "list_user_certificates_cors_method" {
+  rest_api_id   = aws_api_gateway_rest_api.api.id
+  resource_id   = aws_api_gateway_resource.user_certificates_resource.id
   http_method   = "OPTIONS"
   authorization = "NONE"
 }
@@ -243,13 +303,25 @@ resource "aws_api_gateway_integration" "cors_integrations" {
     for key, path in local.paths_map : key => path
     if path.config.cors_enabled
   }
-  
+
   rest_api_id = aws_api_gateway_rest_api.api.id
   resource_id = aws_api_gateway_resource.endpoint_resources[each.key].id
   http_method = aws_api_gateway_method.cors_methods[each.key].http_method
 
   type = "MOCK"
-  
+
+  request_templates = {
+    "application/json" = "{\"statusCode\": 200}"
+  }
+}
+
+resource "aws_api_gateway_integration" "list_user_certificates_cors_integration" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  resource_id = aws_api_gateway_resource.user_certificates_resource.id
+  http_method = aws_api_gateway_method.list_user_certificates_cors_method.http_method
+
+  type = "MOCK"
+
   request_templates = {
     "application/json" = "{\"statusCode\": 200}"
   }
@@ -261,10 +333,23 @@ resource "aws_api_gateway_method_response" "cors_responses" {
     for key, path in local.paths_map : key => path
     if path.config.cors_enabled
   }
-  
+
   rest_api_id = aws_api_gateway_rest_api.api.id
   resource_id = aws_api_gateway_resource.endpoint_resources[each.key].id
   http_method = aws_api_gateway_method.cors_methods[each.key].http_method
+  status_code = "200"
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
+  }
+}
+
+resource "aws_api_gateway_method_response" "list_user_certificates_cors_response" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  resource_id = aws_api_gateway_resource.user_certificates_resource.id
+  http_method = aws_api_gateway_method.list_user_certificates_cors_method.http_method
   status_code = "200"
 
   response_parameters = {
@@ -280,7 +365,7 @@ resource "aws_api_gateway_integration_response" "cors_integration_responses" {
     for key, path in local.paths_map : key => path
     if path.config.cors_enabled
   }
-  
+
   rest_api_id = aws_api_gateway_rest_api.api.id
   resource_id = aws_api_gateway_resource.endpoint_resources[each.key].id
   http_method = aws_api_gateway_method.cors_methods[each.key].http_method
@@ -293,13 +378,30 @@ resource "aws_api_gateway_integration_response" "cors_integration_responses" {
   }
 }
 
+resource "aws_api_gateway_integration_response" "list_user_certificates_cors_integration_response" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  resource_id = aws_api_gateway_resource.user_certificates_resource.id
+  http_method = aws_api_gateway_method.list_user_certificates_cors_method.http_method
+  status_code = aws_api_gateway_method_response.list_user_certificates_cors_response.status_code
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+    "method.response.header.Access-Control-Allow-Methods" = "'${local.list_user_certificates_endpoint.method},OPTIONS'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
+  }
+}
+
 # Deployment do API Gateway com triggers dinâmicos
 resource "aws_api_gateway_deployment" "api_deployment" {
   depends_on = [
     aws_api_gateway_method.endpoint_methods,
     aws_api_gateway_integration.lambda_integrations,
+    aws_api_gateway_method.list_user_certificates_method,
+    aws_api_gateway_integration.list_user_certificates_integration,
     aws_api_gateway_method.cors_methods,
-    aws_api_gateway_integration.cors_integrations
+    aws_api_gateway_integration.cors_integrations,
+    aws_api_gateway_method.list_user_certificates_cors_method,
+    aws_api_gateway_integration.list_user_certificates_cors_integration
   ]
 
   rest_api_id = aws_api_gateway_rest_api.api.id
@@ -308,6 +410,7 @@ resource "aws_api_gateway_deployment" "api_deployment" {
   triggers = {
     redeployment = sha1(jsonencode([
       local.api_structure,
+      local.list_user_certificates_endpoint,
       var.lambda_invoke_arn
     ]))
   }
@@ -357,7 +460,7 @@ resource "aws_api_gateway_api_key" "main_api_key" {
   name        = "${var.project_name}-api-key-${var.environment}"
   description = "API Key para autenticação do ${var.project_name} em ${var.environment}"
   enabled     = true
-  
+
   # Valor da API Key configurável via variável
   value = var.api_key_value
 
@@ -370,8 +473,8 @@ resource "aws_api_gateway_api_key" "main_api_key" {
 
 # Usage Plan para controlar o uso da API Key
 resource "aws_api_gateway_usage_plan" "main_usage_plan" {
-  name         = "${var.project_name}-usage-plan-${var.environment}"
-  description  = "Usage plan para ${var.project_name} em ${var.environment}"
+  name        = "${var.project_name}-usage-plan-${var.environment}"
+  description = "Usage plan para ${var.project_name} em ${var.environment}"
 
   api_stages {
     api_id = aws_api_gateway_rest_api.api.id
@@ -379,13 +482,13 @@ resource "aws_api_gateway_usage_plan" "main_usage_plan" {
   }
 
   quota_settings {
-    limit  = 1000  # 1k requests por mês
+    limit  = 1000 # 1k requests por mês
     period = "MONTH"
   }
 
   throttle_settings {
-    rate_limit  = var.throttle_rate_limit   # requests por segundo
-    burst_limit = var.throttle_burst_limit  # burst máximo
+    rate_limit  = var.throttle_rate_limit  # requests por segundo
+    burst_limit = var.throttle_burst_limit # burst máximo
   }
 
   tags = {
@@ -409,16 +512,16 @@ resource "aws_api_gateway_method_settings" "download_throttling" {
   method_path = "*/certificate/download/GET"
 
   settings {
-    throttling_rate_limit  = 0.083  # ~5 requests por minuto
-    throttling_burst_limit = 2      # burst máximo muito baixo
+    throttling_rate_limit  = 0.083 # ~5 requests por minuto
+    throttling_burst_limit = 2     # burst máximo muito baixo
     metrics_enabled        = true
   }
 }
 
 # Usage Plan específico para endpoint de download com rate limit muito baixo
 resource "aws_api_gateway_usage_plan" "download_usage_plan" {
-  name         = "${var.project_name}-download-usage-plan-${var.environment}"
-  description  = "Usage plan restritivo para endpoint de download de certificados"
+  name        = "${var.project_name}-download-usage-plan-${var.environment}"
+  description = "Usage plan restritivo para endpoint de download de certificados"
 
   api_stages {
     api_id = aws_api_gateway_rest_api.api.id
@@ -426,13 +529,13 @@ resource "aws_api_gateway_usage_plan" "download_usage_plan" {
   }
 
   quota_settings {
-    limit  = 50   # 50 requests por mês
+    limit  = 50 # 50 requests por mês
     period = "MONTH"
   }
 
   throttle_settings {
-    rate_limit  = 0.083  # ~5 requests por minuto (5/60 = 0.083)
-    burst_limit = 2      # burst máximo muito baixo
+    rate_limit  = 0.083 # ~5 requests por minuto (5/60 = 0.083)
+    burst_limit = 2     # burst máximo muito baixo
   }
 
   tags = {
